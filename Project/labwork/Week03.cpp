@@ -1,4 +1,5 @@
 #include "vulkanbase/VulkanBase.h"
+#include "GP2Shader.h"
 
 void VulkanBase::createFrameBuffers() {
 	swapChainFramebuffers.resize(swapChainImageViews.size());
@@ -110,22 +111,30 @@ void VulkanBase::createGraphicsPipeline() {
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
 
-	VkGraphicsPipelineCreateInfo pipelineInfo{};
 
+	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 
-	VkPipelineShaderStageCreateInfo vertShaderStageInfo = createVertexShaderInfo();
-	VkPipelineShaderStageCreateInfo fragShaderStageInfo = createFragmentShaderInfo();
+	m_pShader = std::make_unique<GP2Shader>(device, "shaders/shader.vert.spv", "shaders/shader.frag.spv");
 
-	VkPipelineShaderStageCreateInfo shaderStages[] = {
-		vertShaderStageInfo,
-		fragShaderStageInfo
-	};
+	auto& shaderStages = m_pShader->getShaderStages();
 
-	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = shaderStages;
-	pipelineInfo.pVertexInputState = &createVertexInputStateInfo();
-	pipelineInfo.pInputAssemblyState = &createInputAssemblyStateInfo();
+	if (shaderStages.size() < 2) {
+		throw std::runtime_error("Shader stages are not properly initialized.");
+	}
+
+	auto vertexInputState = m_pShader->createVertexInputStateInfo();
+	auto inputAssemblyState = m_pShader->createInputAssemblyStateInfo();
+
+	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
+	pipelineInfo.pStages = shaderStages.data(); // Pass pointer to the first element of the shaderStages vector
+	pipelineInfo.pVertexInputState = &vertexInputState;
+	pipelineInfo.pInputAssemblyState = &inputAssemblyState;
+
+
+
+
+#pragma region pipelineInfo
 
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
@@ -136,11 +145,13 @@ void VulkanBase::createGraphicsPipeline() {
 	pipelineInfo.renderPass = renderPass;
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+#pragma endregion
+
 
 	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
 
-	vkDestroyShaderModule(device, vertShaderStageInfo.module, nullptr);
-	vkDestroyShaderModule(device, fragShaderStageInfo.module, nullptr);
+	m_GradientShader.destroyShaderModules(device);
+
 }

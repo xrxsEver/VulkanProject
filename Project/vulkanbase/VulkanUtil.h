@@ -1,28 +1,52 @@
 #pragma once
 
-#pragma once
-
 #define VK_USE_PLATFORM_WIN32_KHR
 #define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
+
+#include <vulkan/vulkan.h>
+#include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
-
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
-
-#ifdef NDEBUG
-const bool enableValidationLayers = false;
-#else
-const bool enableValidationLayers = true;
-#endif
-
+#include <optional>
 #include <vector>
 #include <fstream>
 
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
+namespace VkUtils
+{
 
-void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+	const uint32_t WIDTH = 800;
+	const uint32_t HEIGHT = 600;
 
-std::vector<char> readFile(const std::string& filename);
+#ifdef NDEBUG
+	const bool enableValidationLayers = false;
+#else
+	const bool enableValidationLayers = true;
+#endif
 
+	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
+
+	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+
+	std::vector<char> readFile(const std::string& filename);
+
+
+	struct QueueFamilyIndices {
+		std::optional<uint32_t> graphicsFamily;
+		std::optional<uint32_t> presentFamily;
+
+		bool isComplete() const
+		{
+			return graphicsFamily.has_value() && presentFamily.has_value();
+		}
+	};
+
+	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
+
+	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags);
+
+	std::tuple<VkBuffer, VkDeviceMemory> CreateBuffer(VkDevice device,
+		VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags);
+
+	void CopyBuffer(VkDevice device, VkBuffer fromBuffer, VkBuffer toBuffer, VkDeviceSize size, VkQueue graphicsQueue);
+
+}

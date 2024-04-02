@@ -15,7 +15,7 @@
 #include <set>
 #include <limits>
 #include <algorithm>
-
+#include "GP2Shader.h"
 
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
@@ -56,13 +56,13 @@ private:
 		setupDebugMessenger();
 		createSurface();
 
-		// week 05
-		pickPhysicalDevice();
-		createLogicalDevice();
-
 		// week 04 
 		createSwapChain();
 		createImageViews();
+
+		// week 05
+		pickPhysicalDevice();
+		createLogicalDevice();
 		
 		// week 03
 		createRenderPass();
@@ -114,6 +114,9 @@ private:
 
 		glfwDestroyWindow(window);
 		glfwTerminate();
+
+		vkDestroyBuffer(device, vertexBuffer, nullptr);
+
 	}
 
 	
@@ -127,7 +130,10 @@ private:
 	}
 
 	
-
+	GP2Shader m_GradientShader{
+		"shaders/shader.vert.spv",
+		"shaders/shader.frag.spv"
+	};
 	// Week 01: 
 	// Actual window
 	// simple fragment + vertex shader creation functions
@@ -136,12 +142,13 @@ private:
 
 	GLFWwindow* window;
 	void initWindow();
+	std::unique_ptr<GP2Shader> m_pShader;
 
-	VkPipelineShaderStageCreateInfo createFragmentShaderInfo();
-	VkPipelineShaderStageCreateInfo createVertexShaderInfo();
-	VkPipelineVertexInputStateCreateInfo createVertexInputStateInfo();
-	VkPipelineInputAssemblyStateCreateInfo createInputAssemblyStateInfo();
-	VkShaderModule createShaderModule(const std::vector<char>& code);
+	//VkPipelineShaderStageCreateInfo createFragmentShaderInfo();
+	//VkPipelineShaderStageCreateInfo createVertexShaderInfo();
+	//VkPipelineVertexInputStateCreateInfo createVertexInputStateInfo();
+	//VkPipelineInputAssemblyStateCreateInfo createInputAssemblyStateInfo();
+	//VkShaderModule createShaderModule(const std::vector<char>& code);
 
 	void drawScene();
 
@@ -158,7 +165,8 @@ private:
 	void createCommandBuffer();
 	void createCommandPool(); 
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-	
+	void createVertexBuffer();
+
 	// Week 03
 	// Renderpass concept
 	// Graphics pipeline
@@ -167,6 +175,8 @@ private:
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
 	VkRenderPass renderPass;
+	VkBuffer vertexBuffer;
+	VkDeviceMemory vertexBufferMemory;
 
 	void createFrameBuffers();
 	void createRenderPass();
