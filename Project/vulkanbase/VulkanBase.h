@@ -103,9 +103,7 @@ private:
 			vkDestroyImageView(device, imageView, nullptr);
 		}
 
-		if (enableValidationLayers) {
-			DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
-		}
+		
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 		vkDestroyDevice(device, nullptr);
 
@@ -121,7 +119,6 @@ private:
 
 	
 
-	
 
 	void createSurface() {
 		if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {

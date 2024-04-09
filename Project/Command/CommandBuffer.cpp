@@ -1,17 +1,19 @@
 #include "CommandBuffer.h"
 
-void CommandBuffer::reset() const {
-    // Implementation for resetting the command buffer
+CommandBuffer::CommandBuffer(VkDevice device, VkCommandPool commandPool)
+    : device(device), commandPool(commandPool), commandBuffer(VK_NULL_HANDLE) {}
+
+CommandBuffer::~CommandBuffer() {
+    if (commandBuffer != VK_NULL_HANDLE) {
+        vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+        commandBuffer = VK_NULL_HANDLE;
+    }
 }
 
-void CommandBuffer::beginRecording() const {
-    // Implementation for beginning command buffer recording
+void CommandBuffer::allocate() {
+    // Implement your createCommandBuffer functionality here
 }
 
-void CommandBuffer::endRecording() const {
-    // Implementation for ending command buffer recording
-}
-
-void CommandBuffer::submit(VkSubmitInfo& info) const {
-    // Implementation for submitting the command buffer
+VkCommandBuffer CommandBuffer::getCommandBuffer() const {
+    return commandBuffer;
 }

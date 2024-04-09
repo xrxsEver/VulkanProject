@@ -1,25 +1,18 @@
 #pragma once
 
- #include "vulkan/vulkan_core.h"
- #include "CommandBuffer.h"
- #include "vulkanbase/VulkanUtil.h"
+#include <vulkan/vulkan.h>
 
- class CommandPool
- {
- public:CommandPool():
- m_CommandPool{ VK_NULL_HANDLE },
- m_VkDevice{ VK_NULL_HANDLE }
- {
+class CommandPool {
+public:
+    CommandPool(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+    ~CommandPool();
 
- }
+    void create();
+    VkCommandPool getCommandPool() const;
 
- CommandPool() = default;
-
- void initialize(const VkDevice & device, const QueueFamilyIndices & queue);
- void destroy();
-
- CommandBuffer createCommandBuffer()const;
 private:
- VkCommandPool m_CommandPool;
- VkDevice m_VkDevice;
- };
+    VkDevice device;
+    VkPhysicalDevice physicalDevice;
+    VkSurfaceKHR surface;
+    VkCommandPool commandPool;
+};

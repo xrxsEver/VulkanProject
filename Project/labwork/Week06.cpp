@@ -10,12 +10,12 @@ void VulkanBase::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInf
 
 
 void VulkanBase::setupDebugMessenger() {
-	if (!enableValidationLayers) return;
+	if (!VkUtils::enableValidationLayers) return;
 
 	VkDebugUtilsMessengerCreateInfoEXT createInfo;
 	populateDebugMessengerCreateInfo(createInfo);
 
-	if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+	if (!VkUtils::CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
 		throw std::runtime_error("failed to set up debug messenger!");
 	}
 }
@@ -113,7 +113,7 @@ std::vector<const char*> VulkanBase::getRequiredExtensions() {
 
 	std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-	if (enableValidationLayers) {
+	if (VkUtils::enableValidationLayers) {
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
 
@@ -137,7 +137,7 @@ bool VulkanBase::checkDeviceExtensionSupport(VkPhysicalDevice device) {
 }
 
 void VulkanBase::createInstance() {
-	if (enableValidationLayers && !checkValidationLayerSupport()) {
+	if (VkUtils::enableValidationLayers && !checkValidationLayerSupport()) {
 		throw std::runtime_error("validation layers requested, but not available!");
 	}
 
@@ -158,7 +158,7 @@ void VulkanBase::createInstance() {
 	createInfo.ppEnabledExtensionNames = extensions.data();
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-	if (enableValidationLayers) {
+	if (VkUtils::enableValidationLayers) {
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
 

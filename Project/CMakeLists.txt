@@ -30,7 +30,7 @@ set(SOURCES
     "vulkanbase/VulkanUtil.h"
     "vulkanbase/VulkanUtil.cpp"
     # Add other source files here
-    "labwork/Week01.cpp"
+    
     "labwork/Week02.cpp" 
     "labwork/Week03.cpp" 
     "labwork/Week04.cpp" 

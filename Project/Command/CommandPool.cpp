@@ -1,38 +1,19 @@
 #include "CommandPool.h"
 
-void CommandPool::initialize(const VkDevice& device, const QueueFamilyIndices& queue) {
-    m_VkDevice = device;
+CommandPool::CommandPool(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
+    : device(device), physicalDevice(physicalDevice), surface(surface), commandPool(VK_NULL_HANDLE) {}
 
-    VkCommandPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.queueFamilyIndex = queue.graphicsFamily.value();
-    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-
-    if (vkCreateCommandPool(device, &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create command pool!");
+CommandPool::~CommandPool() {
+    if (commandPool != VK_NULL_HANDLE) {
+        vkDestroyCommandPool(device, commandPool, nullptr);
+        commandPool = VK_NULL_HANDLE;
     }
 }
 
-void CommandPool::destroy() {
-    if (m_CommandPool != VK_NULL_HANDLE) {
-        vkDestroyCommandPool(m_VkDevice, m_CommandPool, nullptr);
-        m_CommandPool = VK_NULL_HANDLE;
-    }
+void CommandPool::create() {
+    // Implement your createCommandPool functionality here
 }
 
-CommandBuffer CommandPool::createCommandBuffer() const {
-    CommandBuffer commandBuffer;
-
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = m_CommandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = 1;
-
-    if (vkAllocateCommandBuffers(m_VkDevice, &allocInfo, &commandBuffer.getVkCommandBuffer()) != VK_SUCCESS) {
-        throw std::runtime_error("failed to allocate command buffers!");
-    }
-
-    return commandBuffer;
-
+VkCommandPool CommandPool::getCommandPool() const {
+    return commandPool;
 }

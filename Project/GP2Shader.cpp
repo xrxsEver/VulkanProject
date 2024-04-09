@@ -1,5 +1,14 @@
 #include "GP2Shader.h"
 #include "vulkanbase/VulkanUtil.h"
+#include "vulkanbase/VulkanBase.h"
+
+
+void VulkanBase::initWindow() {
+	glfwInit();
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	window = glfwCreateWindow(400, 600, "Vulkan", nullptr, nullptr);
+}
 
 
 void GP2Shader::initialize(const VkDevice& vkDevice)
@@ -20,7 +29,7 @@ void GP2Shader::destroyShaderModules(const VkDevice& vkDevice)
 
 
 VkPipelineShaderStageCreateInfo GP2Shader::createFragmentShaderInfo(const VkDevice& vkDevice) {
-	std::vector<char> fragShaderCode = readFile(m_FragmentShaderFile);
+	std::vector<char> fragShaderCode = VkUtils::readFile(m_FragmentShaderFile);
 	VkShaderModule fragShaderModule = createShaderModule(vkDevice, fragShaderCode);
 
 	VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
@@ -33,7 +42,7 @@ VkPipelineShaderStageCreateInfo GP2Shader::createFragmentShaderInfo(const VkDevi
 }
 
 VkPipelineShaderStageCreateInfo GP2Shader::createVertexShaderInfo(const VkDevice& vkDevice) {
-	std::vector<char> vertShaderCode = readFile(m_VertexShaderFile);
+	std::vector<char> vertShaderCode = VkUtils::readFile(m_VertexShaderFile);
 	VkShaderModule vertShaderModule = createShaderModule(vkDevice, vertShaderCode);
 
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
@@ -62,6 +71,7 @@ VkPipelineVertexInputStateCreateInfo GP2Shader::createVertexInputStateInfo()
 }
 
 
+
 VkPipelineInputAssemblyStateCreateInfo GP2Shader::createInputAssemblyStateInfo()
 {
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
@@ -71,6 +81,27 @@ VkPipelineInputAssemblyStateCreateInfo GP2Shader::createInputAssemblyStateInfo()
 	return inputAssembly;
 }
 
+void VulkanBase::drawScene() {
+	vkCmdDraw(commandBuffer, 6, 1, 0, 0);
+}
+
+void VulkanBase::createVertexBuffer()
+{
+	VkBufferCreateInfo bufferInfo{};
+
+	VkDeviceMemory vertexBufMemory{};
+
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = sizeof(vertices[0]) * vertices.size();
+	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+
+	if (vkCreateBuffer(device, &bufferInfo, nullptr, &vertexBuffer) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create vertex buffer!");
+	}
+
+}
 
 VkShaderModule GP2Shader::createShaderModule(const VkDevice& vkDevice, const std::vector<char>& code) {
 	VkShaderModuleCreateInfo createInfo{};
