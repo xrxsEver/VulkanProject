@@ -15,7 +15,9 @@
 #include <set>
 #include <limits>
 #include <algorithm>
-#include "GP2Shader.h"
+#include "Shader2D.h"
+#include "Command/CommandPool.h"
+#include "Command/CommandBuffer.h"
 
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
@@ -69,8 +71,12 @@ private:
 		createGraphicsPipeline();
 		createFrameBuffers();
 		// week 02
-		createCommandPool();
-		createCommandBuffer();
+		
+		
+		//createCommandPool();
+		//createCommandBuffer();
+		m_CommandPool.initialize(device, physicalDevice, surface);
+		m_CommandBuffer = m_CommandPool.createCommandBuffer();
 
 		// week 06
 		createSyncObjects();
@@ -90,7 +96,9 @@ private:
 		vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 		vkDestroyFence(device, inFlightFence, nullptr);
 
-		vkDestroyCommandPool(device, commandPool, nullptr);
+
+
+		//vkDestroyCommandPool(device, commandPool, nullptr);
 		for (auto framebuffer : swapChainFramebuffers) {
 			vkDestroyFramebuffer(device, framebuffer, nullptr);
 		}
@@ -98,6 +106,7 @@ private:
 		vkDestroyPipeline(device, graphicsPipeline, nullptr);
 		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 		vkDestroyRenderPass(device, renderPass, nullptr);
+		m_CommandPool.destroy();
 
 		for (auto imageView : swapChainImageViews) {
 			vkDestroyImageView(device, imageView, nullptr);
@@ -118,8 +127,6 @@ private:
 	}
 
 	
-
-
 	void createSurface() {
 		if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create window surface!");
@@ -127,25 +134,14 @@ private:
 	}
 
 	
-	GP2Shader m_GradientShader{
+	Shader2D m_GradientShader{
 		"shaders/shader.vert.spv",
 		"shaders/shader.frag.spv"
 	};
-	// Week 01: 
-	// Actual window
-	// simple fragment + vertex shader creation functions
-	// These 5 functions should be refactored into a separate C++ class
-	// with the correct internal state.
 
 	GLFWwindow* window;
 	void initWindow();
-	std::unique_ptr<GP2Shader> m_pShader;
-
-	//VkPipelineShaderStageCreateInfo createFragmentShaderInfo();
-	//VkPipelineShaderStageCreateInfo createVertexShaderInfo();
-	//VkPipelineVertexInputStateCreateInfo createVertexInputStateInfo();
-	//VkPipelineInputAssemblyStateCreateInfo createInputAssemblyStateInfo();
-	//VkShaderModule createShaderModule(const std::vector<char>& code);
+	std::unique_ptr<Shader2D> m_pShader;
 
 	void drawScene();
 
@@ -153,15 +149,17 @@ private:
 	// Queue families
 	// CommandBuffer concept
 
-	VkCommandPool commandPool;
-	VkCommandBuffer commandBuffer;
+	CommandPool m_CommandPool;
+	CommandBuffer m_CommandBuffer;
+	// VkCommandPool commandPool;
+	// VkCommandBuffer commandBuffer;
 
-	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+	//QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
 	void drawFrame(uint32_t imageIndex);
-	void createCommandBuffer();
-	void createCommandPool(); 
-	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+//		void createCommandBuffer();
+//		void createCommandPool(); 
+//		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void createVertexBuffer();
 
 	// Week 03

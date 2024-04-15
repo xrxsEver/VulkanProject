@@ -1,17 +1,26 @@
 #pragma once
-
-#include <vulkan/vulkan.h>
+#include "vulkan/vulkan_core.h"
 
 class CommandBuffer {
 public:
-    CommandBuffer(VkDevice device, VkCommandPool commandPool);
-    ~CommandBuffer();
+    // Constructor
+    CommandBuffer() = default;
 
-    void allocate();
-    VkCommandBuffer getCommandBuffer() const;
+    // Setter and Getter for VkCommandBuffer
+    void setVkCommandBuffer(VkCommandBuffer buffer) {
+        m_CommandBuffer = buffer;
+    }
+
+    VkCommandBuffer getVkCommandBuffer() const {
+        return m_CommandBuffer;
+    }
+
+    // Methods for command buffer operations
+    void reset();
+    void beginRecording();
+    void endRecording();
+    void submit(VkSubmitInfo& info);
 
 private:
-    VkDevice device;
-    VkCommandPool commandPool;
-    VkCommandBuffer commandBuffer;
+    VkCommandBuffer m_CommandBuffer;
 };

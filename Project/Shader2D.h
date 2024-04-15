@@ -5,11 +5,11 @@
 #include <glm/glm.hpp>
 #include <array>
  
-class GP2Shader
+class Shader2D
 {
 
 public:
-	GP2Shader(
+	Shader2D(
 		const std::string& vertexShaderFile,
 		const std::string& fragmentShaderFile
 	) : m_VertexShaderFile{ vertexShaderFile },
@@ -18,7 +18,7 @@ public:
 
 	}
 
-	~GP2Shader() = default;
+	~Shader2D() = default;
 
 	void initialize(const VkDevice& vkDevice);
 	void destroyShaderModules(const VkDevice& vkDevice);
@@ -43,11 +43,11 @@ private:
 
 	std::vector<VkPipelineShaderStageCreateInfo> m_ShaderStage;
 
-	GP2Shader(const GP2Shader&) = delete;
-	GP2Shader& operator=(const GP2Shader&) = delete;
+	Shader2D(const Shader2D&) = delete;
+	Shader2D& operator=(const Shader2D&) = delete;
 
-	GP2Shader(const GP2Shader&&) = delete;
-	GP2Shader& operator=(const GP2Shader&&) = delete;
+	Shader2D(const Shader2D&&) = delete;
+	Shader2D& operator=(const Shader2D&&) = delete;
 };
 
 

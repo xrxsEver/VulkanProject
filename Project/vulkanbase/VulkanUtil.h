@@ -42,11 +42,11 @@ namespace VkUtils
 
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
 
-	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags);
+	uint32_t FindMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags memoryPropertyFlags);
 
 	std::tuple<VkBuffer, VkDeviceMemory> CreateBuffer(VkDevice device,
 		VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags);
 
-	void CopyBuffer(VkDevice device, VkBuffer fromBuffer, VkBuffer toBuffer, VkDeviceSize size, VkQueue graphicsQueue);
+	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 }

@@ -1,4 +1,4 @@
-#include "GP2Shader.h"
+#include "Shader2D.h"
 #include "vulkanbase/VulkanUtil.h"
 #include "vulkanbase/VulkanBase.h"
 
@@ -11,14 +11,14 @@ void VulkanBase::initWindow() {
 }
 
 
-void GP2Shader::initialize(const VkDevice& vkDevice)
+void Shader2D::initialize(const VkDevice& vkDevice)
 {
 	m_ShaderStage.push_back(createVertexShaderInfo(vkDevice));
 	m_ShaderStage.push_back(createFragmentShaderInfo(vkDevice));
 
 }
 
-void GP2Shader::destroyShaderModules(const VkDevice& vkDevice)
+void Shader2D::destroyShaderModules(const VkDevice& vkDevice)
 {
 	for (VkPipelineShaderStageCreateInfo& stageInfo : m_ShaderStage)
 	{
@@ -28,7 +28,7 @@ void GP2Shader::destroyShaderModules(const VkDevice& vkDevice)
 }
 
 
-VkPipelineShaderStageCreateInfo GP2Shader::createFragmentShaderInfo(const VkDevice& vkDevice) {
+VkPipelineShaderStageCreateInfo Shader2D::createFragmentShaderInfo(const VkDevice& vkDevice) {
 	std::vector<char> fragShaderCode = VkUtils::readFile(m_FragmentShaderFile);
 	VkShaderModule fragShaderModule = createShaderModule(vkDevice, fragShaderCode);
 
@@ -41,7 +41,7 @@ VkPipelineShaderStageCreateInfo GP2Shader::createFragmentShaderInfo(const VkDevi
 	return fragShaderStageInfo;
 }
 
-VkPipelineShaderStageCreateInfo GP2Shader::createVertexShaderInfo(const VkDevice& vkDevice) {
+VkPipelineShaderStageCreateInfo Shader2D::createVertexShaderInfo(const VkDevice& vkDevice) {
 	std::vector<char> vertShaderCode = VkUtils::readFile(m_VertexShaderFile);
 	VkShaderModule vertShaderModule = createShaderModule(vkDevice, vertShaderCode);
 
@@ -53,7 +53,7 @@ VkPipelineShaderStageCreateInfo GP2Shader::createVertexShaderInfo(const VkDevice
 	return vertShaderStageInfo;
 }
 
-VkPipelineVertexInputStateCreateInfo GP2Shader::createVertexInputStateInfo()
+VkPipelineVertexInputStateCreateInfo Shader2D::createVertexInputStateInfo()
 {
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -72,7 +72,7 @@ VkPipelineVertexInputStateCreateInfo GP2Shader::createVertexInputStateInfo()
 
 
 
-VkPipelineInputAssemblyStateCreateInfo GP2Shader::createInputAssemblyStateInfo()
+VkPipelineInputAssemblyStateCreateInfo Shader2D::createInputAssemblyStateInfo()
 {
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -82,8 +82,43 @@ VkPipelineInputAssemblyStateCreateInfo GP2Shader::createInputAssemblyStateInfo()
 }
 
 void VulkanBase::drawScene() {
-	vkCmdDraw(commandBuffer, 6, 1, 0, 0);
+	vkCmdDraw(m_CommandBuffer.getVkCommandBuffer(), 6, 1, 0, 0);
 }
+
+void VulkanBase::drawFrame(uint32_t imageIndex) {
+	VkRenderPassBeginInfo renderPassInfo{};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = renderPass;
+	renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = swapChainExtent;
+
+	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+	renderPassInfo.clearValueCount = 1;
+	renderPassInfo.pClearValues = &clearColor;
+
+	vkCmdBeginRenderPass(m_CommandBuffer.getVkCommandBuffer(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	vkCmdBindPipeline(m_CommandBuffer.getVkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+
+	VkViewport viewport{};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = (float)swapChainExtent.width;
+	viewport.height = (float)swapChainExtent.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	vkCmdSetViewport(m_CommandBuffer.getVkCommandBuffer(), 0, 1, &viewport);
+
+	VkRect2D scissor{};
+	scissor.offset = { 0, 0 };
+	scissor.extent = swapChainExtent;
+	vkCmdSetScissor(m_CommandBuffer.getVkCommandBuffer(), 0, 1, &scissor);
+
+	drawScene();
+	vkCmdEndRenderPass(m_CommandBuffer.getVkCommandBuffer());
+}
+
 
 void VulkanBase::createVertexBuffer()
 {
@@ -103,7 +138,7 @@ void VulkanBase::createVertexBuffer()
 
 }
 
-VkShaderModule GP2Shader::createShaderModule(const VkDevice& vkDevice, const std::vector<char>& code) {
+VkShaderModule Shader2D::createShaderModule(const VkDevice& vkDevice, const std::vector<char>& code) {
 	VkShaderModuleCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	createInfo.codeSize = code.size();

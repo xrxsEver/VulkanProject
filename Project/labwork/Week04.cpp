@@ -1,4 +1,5 @@
 #include "vulkanbase/VulkanBase.h"
+#include "vulkanbase/VulkanUtil.h"
 
 SwapChainSupportDetails VulkanBase::querySwapChainSupport(VkPhysicalDevice device) {
 	SwapChainSupportDetails details;
@@ -87,7 +88,10 @@ void VulkanBase::createSwapChain() {
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+
+	//QueueFamilyIndices indices = FindQueueFamilies(physicalDevice, surface);
+
+	QueueFamilyIndices indices = VkUtils::FindQueueFamilies(physicalDevice);
 	uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
 	if (indices.graphicsFamily != indices.presentFamily) {

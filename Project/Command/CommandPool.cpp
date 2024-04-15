@@ -1,19 +1,45 @@
 #include "CommandPool.h"
 
-CommandPool::CommandPool(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
-    : device(device), physicalDevice(physicalDevice), surface(surface), commandPool(VK_NULL_HANDLE) {}
+void CommandPool::initialize(const VkDevice& device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface) {
+	// Use FindQueueFamilies from VkUtils namespace
+	VkUtils::QueueFamilyIndices indices = VkUtils::FindQueueFamilies(physicalDevice, surface);
 
-CommandPool::~CommandPool() {
-    if (commandPool != VK_NULL_HANDLE) {
-        vkDestroyCommandPool(device, commandPool, nullptr);
-        commandPool = VK_NULL_HANDLE;
-    }
+	VkCommandPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	poolInfo.queueFamilyIndex = indices.graphicsFamily.value(); // Use the queue family index from FindQueueFamilies
+
+	if (vkCreateCommandPool(device, &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create command pool!");
+	}
+
+	// Store the VkDevice for later use
+	m_VkDevice = device;
 }
 
-void CommandPool::create() {
-    // Implement your createCommandPool functionality here
+CommandBuffer CommandPool::createCommandBuffer()const {
+	 VkCommandBufferAllocateInfo allocInfo{};
+	 allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	 allocInfo.commandPool = m_CommandPool;
+	 allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	 allocInfo.commandBufferCount = 1;
+	
+	 VkCommandBuffer commandBuffer;
+	
+		 if (vkAllocateCommandBuffers(m_VkDevice, &allocInfo, &commandBuffer) !=
+			VK_SUCCESS) {
+		 throw std::runtime_error("failed to allocate command buffers!");
+		
+	}
+	 CommandBuffer cmdBuffer;
+	 cmdBuffer.setVkCommandBuffer(commandBuffer);
+	 return cmdBuffer;
+	
 }
 
-VkCommandPool CommandPool::getCommandPool() const {
-    return commandPool;
+
+
+void CommandPool::destroy()
+{
+	 vkDestroyCommandPool(m_VkDevice, m_CommandPool, nullptr);
 }

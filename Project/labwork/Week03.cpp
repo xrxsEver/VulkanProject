@@ -1,5 +1,5 @@
 #include "vulkanbase/VulkanBase.h"
-#include "GP2Shader.h"
+#include "Shader2D.h"
 
 void VulkanBase::createFrameBuffers() {
 	swapChainFramebuffers.resize(swapChainImageViews.size());
@@ -115,7 +115,7 @@ void VulkanBase::createGraphicsPipeline() {
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 
-	m_pShader = std::make_unique<GP2Shader>(device, "shaders/shader.vert.spv", "shaders/shader.frag.spv");
+	m_pShader = std::make_unique<Shader2D>(device, "shaders/shader.vert.spv", "shaders/shader.frag.spv");
 
 	auto& shaderStages = m_pShader->getShaderStages();
 

@@ -1,18 +1,23 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
+ #include "vulkan/vulkan_core.h"
+ #include "CommandBuffer.h"
+ #include "vulkanbase/VulkanUtil.h"
+ #include "vulkanbase/VulkanBase.h"
+
 
 class CommandPool {
 public:
-    CommandPool(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
-    ~CommandPool();
+    // Constructors
+    CommandPool() : m_CommandPool(VK_NULL_HANDLE), m_VkDevice(VK_NULL_HANDLE) {}
+    CommandPool(const CommandPool&) = default; // Copy constructor
 
-    void create();
-    VkCommandPool getCommandPool() const;
+    // Methods
+    void initialize(const VkDevice& device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+    void destroy();
+    CommandBuffer createCommandBuffer() const;
 
 private:
-    VkDevice device;
-    VkPhysicalDevice physicalDevice;
-    VkSurfaceKHR surface;
-    VkCommandPool commandPool;
+    VkCommandPool m_CommandPool;
+    VkDevice m_VkDevice;
 };

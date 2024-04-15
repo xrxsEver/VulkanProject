@@ -1,19 +1,28 @@
 #include "CommandBuffer.h"
+#include <stdexcept>
 
-CommandBuffer::CommandBuffer(VkDevice device, VkCommandPool commandPool)
-    : device(device), commandPool(commandPool), commandBuffer(VK_NULL_HANDLE) {}
+void CommandBuffer::reset() {
+    vkResetCommandBuffer(m_CommandBuffer, /*VkCommandBufferResetFlagBits*/ 0);
+}
 
-CommandBuffer::~CommandBuffer() {
-    if (commandBuffer != VK_NULL_HANDLE) {
-        vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-        commandBuffer = VK_NULL_HANDLE;
+void CommandBuffer::beginRecording() {
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = 0; // Optional
+    beginInfo.pInheritanceInfo = nullptr; // Optional
+
+    if (vkBeginCommandBuffer(m_CommandBuffer, &beginInfo) != VK_SUCCESS) {
+        throw std::runtime_error("failed to begin recording command buffer!");
     }
 }
 
-void CommandBuffer::allocate() {
-    // Implement your createCommandBuffer functionality here
+void CommandBuffer::endRecording() {
+    if (vkEndCommandBuffer(m_CommandBuffer) != VK_SUCCESS) {
+        throw std::runtime_error("failed to record command buffer!");
+    }
 }
 
-VkCommandBuffer CommandBuffer::getCommandBuffer() const {
-    return commandBuffer;
+void CommandBuffer::submit(VkSubmitInfo& info) {
+    info.commandBufferCount = 1;
+    info.pCommandBuffers = &m_CommandBuffer;
 }
