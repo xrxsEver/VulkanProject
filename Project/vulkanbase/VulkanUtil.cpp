@@ -42,32 +42,46 @@ namespace VkUtils {
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
 		QueueFamilyIndices indices;
 
+		// Query the number of queue families
 		uint32_t queueFamilyCount = 0;
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+		std::cout << "Number of Queue Families: " << queueFamilyCount << std::endl;
 
+		// Retrieve properties of each queue family
 		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
 		int i = 0;
 		for (const auto& queueFamily : queueFamilies) {
+			// Print properties of each queue family
+			std::cout << "Queue Family " << i << " Properties:" << std::endl;
+			std::cout << "\tQueue Count: " << queueFamily.queueCount << std::endl;
+			std::cout << "\tQueue Flags: " << queueFamily.queueFlags << std::endl;
+			std::cout << "\tTimestamp Valid Bits: " << queueFamily.timestampValidBits << std::endl;
+			std::cout << "\tMin Image Transfer Granularity: (" << queueFamily.minImageTransferGranularity.width << ", " << queueFamily.minImageTransferGranularity.height << ", " << queueFamily.minImageTransferGranularity.depth << ")" << std::endl;
+
 			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 				indices.graphicsFamily = i;
 			}
 
 			VkBool32 presentSupport = false;
 			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+			std::cout << "Queue Family " << i << " Present Support: " << (presentSupport ? "Supported" : "Not Supported") << std::endl;
 
-			if (presentSupport)
+			if (presentSupport) {
 				indices.presentFamily = i;
+			}
 
-			if (indices.isComplete())
+			if (indices.isComplete()) {
 				break;
+			}
 
 			i++;
 		}
 
 		return indices;
 	}
+
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice device) {
 		VkPhysicalDeviceMemoryProperties memProperties;

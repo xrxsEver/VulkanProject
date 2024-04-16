@@ -56,6 +56,7 @@ public:
 		cleanup();
 	}
 
+
 private:
 
 
@@ -68,14 +69,13 @@ private:
 		setupDebugMessenger();
 		createSurface();
 
+		pickPhysicalDevice();
+		createLogicalDevice();
 		// week 04 
 		createSwapChain();
 		createImageViews();
 
-		// week 05
-		pickPhysicalDevice();
-		createLogicalDevice();
-		
+	
 		// week 03
 		createRenderPass();
 		createGraphicsPipeline();

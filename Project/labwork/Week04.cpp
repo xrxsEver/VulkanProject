@@ -1,6 +1,7 @@
 #include "vulkanbase/VulkanBase.h"
 #include "vulkanbase/VulkanUtil.h"
 
+
 SwapChainSupportDetails VulkanBase::querySwapChainSupport(VkPhysicalDevice device) {
 	SwapChainSupportDetails details;
 
@@ -24,6 +25,8 @@ SwapChainSupportDetails VulkanBase::querySwapChainSupport(VkPhysicalDevice devic
 
 	return details;
 }
+
+
 
 VkSurfaceFormatKHR VulkanBase::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
 	for (const auto& availableFormat : availableFormats) {
