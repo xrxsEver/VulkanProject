@@ -91,7 +91,7 @@ void VulkanBase::createSwapChain() {
 
 	//QueueFamilyIndices indices = FindQueueFamilies(physicalDevice, surface);
 
-	QueueFamilyIndices indices = VkUtils::FindQueueFamilies(physicalDevice);
+	VkUtils::QueueFamilyIndices indices = VkUtils::FindQueueFamilies(physicalDevice,surface);
 	uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
 	if (indices.graphicsFamily != indices.presentFamily) {

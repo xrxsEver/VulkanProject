@@ -3,9 +3,9 @@
  #include "vulkan/vulkan_core.h"
  #include "CommandBuffer.h"
  #include "vulkanbase/VulkanUtil.h"
- #include "vulkanbase/VulkanBase.h"
 
 
+class VulkanBase;
 class CommandPool {
 public:
     // Constructors

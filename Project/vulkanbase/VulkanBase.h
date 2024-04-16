@@ -4,6 +4,8 @@
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 #include "VulkanUtil.h"
+#include "Command/CommandPool.h"
+#include "Command/CommandBuffer.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -16,8 +18,6 @@
 #include <limits>
 #include <algorithm>
 #include "Shader2D.h"
-#include "Command/CommandPool.h"
-#include "Command/CommandBuffer.h"
 
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
@@ -42,8 +42,13 @@ struct SwapChainSupportDetails {
 	std::vector<VkPresentModeKHR> presentModes;
 };
 
+
+
 class VulkanBase {
 public:
+
+
+
 	void run() {
 		initWindow();
 		initVulkan();
@@ -52,6 +57,11 @@ public:
 	}
 
 private:
+
+
+	
+
+
 	void initVulkan() {
 		// week 06
 		createInstance();
@@ -139,27 +149,22 @@ private:
 		"shaders/shader.frag.spv"
 	};
 
+
 	GLFWwindow* window;
 	void initWindow();
 	std::unique_ptr<Shader2D> m_pShader;
 
-	void drawScene();
-
-	// Week 02
-	// Queue families
-	// CommandBuffer concept
 
 	CommandPool m_CommandPool;
 	CommandBuffer m_CommandBuffer;
-	// VkCommandPool commandPool;
-	// VkCommandBuffer commandBuffer;
 
-	//QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+	
+	void drawScene();
 
 	void drawFrame(uint32_t imageIndex);
-//		void createCommandBuffer();
-//		void createCommandPool(); 
-//		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+//	void createCommandBuffer();
+//	void createCommandPool(); 
+//	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void createVertexBuffer();
 
 	// Week 03

@@ -1,4 +1,5 @@
 #include "vulkanbase/VulkanBase.h"
+#include "vulkanbase/VulkanUtil.h"
 
 void VulkanBase::pickPhysicalDevice() {
 	uint32_t deviceCount = 0;
@@ -28,14 +29,14 @@ void VulkanBase::pickPhysicalDevice() {
 }
 
 bool VulkanBase::isDeviceSuitable(VkPhysicalDevice device) {
-	QueueFamilyIndices indices = findQueueFamilies(device);
+	VkUtils::QueueFamilyIndices indices = VkUtils::FindQueueFamilies(physicalDevice, surface);
 	bool extensionsSupported = checkDeviceExtensionSupport(device);
 	return indices.isComplete() && extensionsSupported;
 
 }
 
 void VulkanBase::createLogicalDevice() {
-	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+	VkUtils::QueueFamilyIndices indices = VkUtils::FindQueueFamilies(physicalDevice, surface);
 
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };

@@ -47,7 +47,7 @@ void VulkanBase::drawFrame() {
 	m_CommandBuffer.beginRecording();
 
 	// recordCommandBuffer in Week02.cpp
-	recordCommandBuffer(m_CommandBuffer.getVkCommandBuffer(), imageIndex);
+	//recordCommandBuffer(m_CommandBuffer.getVkCommandBuffer(), imageIndex);
 	m_CommandBuffer.endRecording();
 
 
@@ -160,7 +160,8 @@ void VulkanBase::createInstance() {
 	auto extensions = getRequiredExtensions();
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
-
+	createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+	createInfo.ppEnabledLayerNames = validationLayers.data();
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 	if (VkUtils::enableValidationLayers) {
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
