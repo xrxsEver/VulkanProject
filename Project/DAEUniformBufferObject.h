@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "vulkanbase/VulkanUtil.h"

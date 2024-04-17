@@ -1,3 +1,5 @@
+#pragma once 
+
 #include "vulkanbase/VulkanBase.h"
 #include "DAEDataBuffer.h"
 #include "Vertex.h"
@@ -18,5 +20,5 @@ private:
 	std::unique_ptr<DAEDataBuffer> m_VertexBuffer;
 	std::unique_ptr<DAEDataBuffer> m_IndexBuffer;
 
-	VertexConstant m_VertexConstant;
+	//VertexConstant m_VertexConstant;
 };

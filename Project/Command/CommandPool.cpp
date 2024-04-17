@@ -1,13 +1,12 @@
 #include "CommandPool.h"
 
 void CommandPool::initialize(const VkDevice& device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface) {
-	// Use FindQueueFamilies from VkUtils namespace
 	VkUtils::QueueFamilyIndices indices = VkUtils::FindQueueFamilies(physicalDevice, surface);
 
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	poolInfo.queueFamilyIndex = indices.graphicsFamily.value(); // Use the queue family index from FindQueueFamilies
+	poolInfo.queueFamilyIndex = indices.graphicsFamily.value(); 
 
 
 

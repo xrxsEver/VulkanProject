@@ -7,6 +7,11 @@
 #include "DAEMesh.h"
 #include "command/CommandPool.h"
 #include "Command/CommandBuffer.h"
+#include "SwapChainManager.h"
+
+const std::vector<const char*> validationLayers = {
+    "VK_LAYER_KHRONOS_validation"
+};
 
 class VulkanBase {
 public:
@@ -34,6 +39,7 @@ private:
     void createCommandBuffers();
     void createSyncObjects();
     void drawFrame();
+    void drawScene();
 
     GLFWwindow* window;
     VkInstance instance;
@@ -58,6 +64,8 @@ private:
     size_t currentFrame = 0;
 
     bool framebufferResized = false;
+    bool isDeviceSuitable(VkPhysicalDevice device);
+    bool  checkValidationLayerSupport();
 
     VkDebugUtilsMessengerEXT debugMessenger;
     std::unique_ptr<Shader2D> m_GradientShader;
@@ -67,6 +75,8 @@ private:
 
     void createVertexBuffer();
     void createIndexBuffer();
-
+    void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
+    std::vector<const char*> getRequiredExtensions();
+    bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 };

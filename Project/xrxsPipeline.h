@@ -11,9 +11,7 @@ public:
 private:
     void createGraphicsPipeline(VkDevice device);
     void createShaderModules();
-    // Additional private methods for setting up the pipeline and shaders.
 
-    // Method to encapsulate the draw calls and bindings
     void drawScene(VkCommandBuffer commandBuffer);
     VkPushConstantRange createPushConstantRange();
 
@@ -34,7 +32,7 @@ private:
     VkFormat m_SwapChainImageFormat;
     VkExtent2D m_SwapChainExtent;
 
-    //
+    
     CommandBuffer m_Buffer;
     VkPipeline graphicsPipeline;
     VkPipelineLayout pipelineLayout;

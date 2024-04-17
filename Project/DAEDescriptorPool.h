@@ -1,3 +1,5 @@
+#pragma once  
+
 #include <vector>
 #include <memory>
 #include "DAEDataBuffer.h"
@@ -12,6 +14,8 @@ public:
 	void initialize(const VkUtils::VulkanContext& context);
 
 	void setUBO(UBO data, size_t index);
+	std::vector<DAEUniformBufferObjectPtr<UBO>> m_UBOs; 
+
 
 	const VkDescriptorSetLayout& getDescriptorSetLayout()
 	{
@@ -32,7 +36,6 @@ private:
 
 	VkDescriptorPool m_DescriptorPool;
 	std::vector<VkDescriptorSet> m_DescriptorSets;
-	std::vector<DAEUniformBufferObjectPtr<UBO>> m_UBOs;
 
 	size_t m_Count;
 };

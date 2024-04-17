@@ -5,22 +5,15 @@
 #include "vulkanbase/VulkanBase.h"
 
 void xrxsPipeline::initialize(VkDevice device) {
-    // Implementation for initializing the pipeline
-    // This should set up shaders, pipeline state, and other necessary Vulkan objects
     createShaderModules();
     createGraphicsPipeline(device);
-    // Other initialization code...
 }
 
 void xrxsPipeline::recordCommands(VkCommandBuffer commandBuffer) {
-    // Record the commands for the command buffer
-    // This typically includes commands to bind the pipeline, descriptor sets,
-    // and drawing commands
-    // For example:
-    // vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-    // vkCmdBindDescriptorSets(commandBuffer, ...);
-    drawScene(commandBuffer);
-    // Any other commands...
+
+     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+     vkCmdBindDescriptorSets(commandBuffer);
+     drawScene(commandBuffer);
 }
 
 void xrxsPipeline::createGraphicsPipeline(VkDevice device) {
@@ -68,14 +61,13 @@ void xrxsPipeline::createGraphicsPipeline(VkDevice device) {
     dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
     dynamicState.pDynamicStates = dynamicStates.data();
 
-    // Retrieve the push constant range from the helper method
     VkPushConstantRange pushConstantRange = createPushConstantRange();
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 0;
-    pipelineLayoutInfo.pushConstantRangeCount = 1;  // Set push constant range count to 1
-    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;  // Link to the push constant range
+    pipelineLayoutInfo.pushConstantRangeCount = 1;  
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;  
 
     if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create pipeline layout!");
@@ -95,7 +87,7 @@ void xrxsPipeline::createGraphicsPipeline(VkDevice device) {
     auto inputAssemblyState = m_pShader->createInputAssemblyStateInfo();
 
     pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
-    pipelineInfo.pStages = shaderStages.data(); // Pass pointer to the first element of the shaderStages vector
+    pipelineInfo.pStages = shaderStages.data(); 
     pipelineInfo.pVertexInputState = &vertexInputState;
     pipelineInfo.pInputAssemblyState = &inputAssemblyState;
 
@@ -119,16 +111,16 @@ void xrxsPipeline::createGraphicsPipeline(VkDevice device) {
 VkPushConstantRange xrxsPipeline::createPushConstantRange()
 {
     VkPushConstantRange pushConstantRange = {};
-    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT; // Stage the push constant is accessible from
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     pushConstantRange.offset = 0;
-    pushConstantRange.size = sizeof(MeshData); // Size of push constant block
+    pushConstantRange.size = sizeof(MeshData); 
 
     return pushConstantRange;
 }
 
 void xrxsPipeline::createShaderModules() {
-    // Create the Vulkan shader modules
-    // This will compile shaders from source or load precompiled shaders
+
+
 }
 
 void xrxsPipeline::drawScene(VkCommandBuffer commandBuffer) {

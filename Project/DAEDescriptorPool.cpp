@@ -5,7 +5,6 @@ template <class UBO>
 DAEDescriptorPool<UBO>::DAEDescriptorPool(VkDevice device, size_t count)
     : m_Device(device), m_Count(count)
 {
-    // Constructor logic if needed
 }
 
 template <class UBO>
@@ -13,7 +12,6 @@ DAEDescriptorPool<UBO>::~DAEDescriptorPool() {
     // Cleanup
     vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
     vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
-    // Consider destroying UBOs if not managed externally
 }
 
 template <class UBO>
@@ -27,7 +25,6 @@ void DAEDescriptorPool<UBO>::setUBO(UBO data, size_t index) {
     if (index >= m_UBOs.size()) {
         throw std::out_of_range("Index out of range");
     }
-    // Assuming DAEDataBuffer has a method to update data
     m_UBOs[index]->update(data);
 }
 
@@ -47,7 +44,7 @@ void DAEDescriptorPool<UBO>::createDescriptorSets(VkDescriptorSetLayout descript
 
     for (size_t i = 0; i < m_Count; i++) {
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = buffers.begin()[i]; // This is very naive; ensure buffer list matches count
+        bufferInfo.buffer = buffers.begin()[i]; 
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UBO);
 
@@ -78,7 +75,7 @@ void DAEDescriptorPool<UBO>::createDescriptorSetLayout(const VkUtils::VulkanCont
     uboLayoutBinding.binding = 0;
     uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT; // Adjust based on actual usage
+    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     uboLayoutBinding.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};

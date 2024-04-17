@@ -1,3 +1,5 @@
+#pragma once 
+
 #include "vulkanbase/VulkanBase.h"
 
 #include <stdexcept>
