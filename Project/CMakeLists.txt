@@ -30,16 +30,16 @@ set(SOURCES
     "vulkanbase/VulkanUtil.h"
     "vulkanbase/VulkanUtil.cpp"
     # Add other source files here
-    ""
+     "Command/CommandPool.h" "Command/CommandBuffer.h" "Command/CommandPool.cpp" "Command/CommandBuffer.cpp" "xrxsPipeline.h" "xrxsPipeline.cpp" "Vertex.h" "DAEMesh.h" "DAEMesh.cpp" "DAEDescriptorPool.h" "DAEUniformBufferObject.h" "DAEDataBuffer.h" "DAEDataBuffer.cpp" "DAEDescriptorPool.cpp" "vulkanbase/VulkanBase.cpp"  "RenderPassManagement.h"
      
-    "labwork/Week03.cpp" 
-    "labwork/Week04.cpp" 
+     
+     
     "labwork/Week05.cpp"
     "labwork/Week06.cpp"
 )
 
 # Create the executable
-add_executable(${PROJECT_NAME} ${SOURCES} ${GLSL_SOURCE_FILES}  "Shader2D.h" "Shader2D.cpp"  "Command/CommandPool.h" "Command/CommandBuffer.h" "Command/CommandPool.cpp" "Command/CommandBuffer.cpp" "xrxsPipeline.h" "xrxsPipeline.cpp")
+add_executable(${PROJECT_NAME} ${SOURCES} ${GLSL_SOURCE_FILES}  "Shader2D.h" "Shader2D.cpp"  "Command/CommandPool.h" "Command/CommandBuffer.h" "Command/CommandPool.cpp" "Command/CommandBuffer.cpp" "xrxsPipeline.h" "xrxsPipeline.cpp" "Vertex.h" "DAEMesh.h" "DAEMesh.cpp" "DAEDescriptorPool.h" "DAEUniformBufferObject.h" "DAEDataBuffer.h" "DAEDataBuffer.cpp" "DAEDescriptorPool.cpp" "vulkanbase/VulkanBase.cpp"  "RenderPassManagement.h" "SwapChainManager.h" "SwapChainManager.cpp")
 add_dependencies(${PROJECT_NAME} Shaders)
 # Link libraries
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

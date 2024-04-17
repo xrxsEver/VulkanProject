@@ -1,226 +1,72 @@
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
 #include "VulkanUtil.h"
-#include "Command/CommandPool.h"
-#include "Command/CommandBuffer.h"
-
-#include <iostream>
-#include <stdexcept>
-#include <vector>
-#include <cstring>
-#include <cstdlib>
-#include <cstdint>
-#include <optional>
-#include <set>
-#include <limits>
-#include <algorithm>
 #include "Shader2D.h"
 #include "xrxsPipeline.h"
-
-const std::vector<const char*> validationLayers = {
-	"VK_LAYER_KHRONOS_validation"
-};
-
-const std::vector<const char*> deviceExtensions = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
-
-struct QueueFamilyIndices {
-	std::optional<uint32_t> graphicsFamily;
-	std::optional<uint32_t> presentFamily;
-
-	bool isComplete() {
-		return graphicsFamily.has_value() && presentFamily.has_value();
-	}
-};
-
-struct SwapChainSupportDetails {
-	VkSurfaceCapabilitiesKHR capabilities;
-	std::vector<VkSurfaceFormatKHR> formats;
-	std::vector<VkPresentModeKHR> presentModes;
-};
-
-
+#include "DAEMesh.h"
+#include "command/CommandPool.h"
+#include "Command/CommandBuffer.h"
 
 class VulkanBase {
 public:
-
-
-
-	void run() {
-		initWindow();
-		initVulkan();
-		mainLoop();
-		cleanup();
-	}
-
+    VulkanBase();
+    ~VulkanBase();
+    void run();
 
 private:
-	
-	xrxsPipeline m_Pipeline;
+    void initWindow();
+    void initVulkan();
+    void mainLoop();
+    void cleanup();
 
+    void createInstance();
+    void setupDebugMessenger();
+    void createSurface();
+    void pickPhysicalDevice();
+    void createLogicalDevice();
+    void createSwapChain();
+    void createImageViews();
+    void createRenderPass();
+    void createGraphicsPipeline();
+    void createFrameBuffers();
+    void createCommandPool();
+    void createCommandBuffers();
+    void createSyncObjects();
+    void drawFrame();
 
-	void initVulkan() {
-		// week 06
-		createInstance();
-		setupDebugMessenger();
-		createSurface();
+    GLFWwindow* window;
+    VkInstance instance;
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkDevice device;
+    VkQueue graphicsQueue;
+    VkQueue presentQueue;
+    VkSurfaceKHR surface;
+    VkSwapchainKHR swapChain;
+    std::vector<VkImage> swapChainImages;
+    std::vector<VkImageView> swapChainImageViews;
+    std::vector<VkFramebuffer> swapChainFramebuffers;
+    VkRenderPass renderPass;
+    VkDescriptorSetLayout descriptorSetLayout;
+    VkPipelineLayout pipelineLayout;
+    VkPipeline graphicsPipeline;
+    VkCommandPool commandPool;
+    std::vector<VkCommandBuffer> commandBuffers;
+    std::vector<VkSemaphore> imageAvailableSemaphores;
+    std::vector<VkSemaphore> renderFinishedSemaphores;
+    std::vector<VkFence> inFlightFences;
+    size_t currentFrame = 0;
 
-		pickPhysicalDevice();
-		createLogicalDevice();
-		// week 04 
+    bool framebufferResized = false;
 
-		m_GradientShader.initialize(device);
+    VkDebugUtilsMessengerEXT debugMessenger;
+    std::unique_ptr<Shader2D> m_GradientShader;
+    std::unique_ptr<CommandPool> m_CommandPool;
+    std::unique_ptr<xrxsPipeline> m_Pipeline;
+    std::unique_ptr<DAEMesh> m_Mesh;
 
-		createSwapChain();
-		createImageViews();
+    void createVertexBuffer();
+    void createIndexBuffer();
 
-	
-		// week 03
-		createRenderPass();
-		m_Pipeline.initialize(device);
-		createFrameBuffers();
-		// week 02
-		
-		m_CommandPool.initialize(device, physicalDevice, surface);
-		m_CommandBuffer = m_CommandPool.createCommandBuffer();
-
-		// week 06
-		createSyncObjects();
-	}
-
-	void mainLoop() {
-		while (!glfwWindowShouldClose(window)) {
-			glfwPollEvents();
-			// week 06
-			drawFrame();
-		}
-		vkDeviceWaitIdle(device);
-	}
-
-	void cleanup() {
-		vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
-		vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
-		vkDestroyFence(device, inFlightFence, nullptr);
-
-
-
-		//vkDestroyCommandPool(device, commandPool, nullptr);
-		for (auto framebuffer : swapChainFramebuffers) {
-			vkDestroyFramebuffer(device, framebuffer, nullptr);
-		}
-
-		vkDestroyPipeline(device, graphicsPipeline, nullptr);
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-		vkDestroyRenderPass(device, renderPass, nullptr);
-		m_CommandPool.destroy();
-
-		for (auto imageView : swapChainImageViews) {
-			vkDestroyImageView(device, imageView, nullptr);
-		}
-
-		
-		vkDestroySwapchainKHR(device, swapChain, nullptr);
-		vkDestroyDevice(device, nullptr);
-
-		vkDestroySurfaceKHR(instance, surface, nullptr);
-		vkDestroyInstance(instance, nullptr);
-
-		glfwDestroyWindow(window);
-		glfwTerminate();
-
-		vkDestroyBuffer(device, vertexBuffer, nullptr);
-
-	}
-
-	
-	void createSurface() {
-		if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create window surface!");
-		}
-	}
-
-	
-	Shader2D m_GradientShader{
-		"shaders/shader.vert.spv",
-		"shaders/shader.frag.spv"
-	};
-
-
-	GLFWwindow* window;
-	void initWindow();
-
-
-	CommandPool m_CommandPool;
-	CommandBuffer m_CommandBuffer;
-
-	
-	void drawScene();
-	void drawFrame(uint32_t imageIndex);
-	void createVertexBuffer();
-
-	std::vector<VkFramebuffer> swapChainFramebuffers;
-	VkPipelineLayout pipelineLayout;
-	VkPipeline graphicsPipeline;
-	VkRenderPass renderPass;
-	VkBuffer vertexBuffer;
-	VkDeviceMemory vertexBufferMemory;
-
-	void createFrameBuffers();
-	void createRenderPass();
-
-	
-	VkSwapchainKHR swapChain;
-	std::vector<VkImage> swapChainImages;
-	VkFormat swapChainImageFormat;
-	VkExtent2D swapChainExtent;
-
-	std::vector<VkImageView> swapChainImageViews;
-
-	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
-	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-	void createSwapChain();
-	void createImageViews();
-
-	// Week 05 
-	// Logical and physical device
-
-	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-	VkQueue graphicsQueue;
-	VkQueue presentQueue;
-	
-	void pickPhysicalDevice();
-	bool isDeviceSuitable(VkPhysicalDevice device);
-	void createLogicalDevice();
-
-	// Week 06
-	// Main initialization
-
-	VkInstance instance;
-	VkDebugUtilsMessengerEXT debugMessenger;
-	VkDevice device = VK_NULL_HANDLE;
-	VkSurfaceKHR surface;
-
-	VkSemaphore imageAvailableSemaphore;
-	VkSemaphore renderFinishedSemaphore;
-	VkFence inFlightFence;
-
-	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-	void setupDebugMessenger();
-	std::vector<const char*> getRequiredExtensions();
-	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-	void createInstance();
-
-	void createSyncObjects();
-	void drawFrame();
-
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-		return VK_FALSE;
-	}
+    static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 };

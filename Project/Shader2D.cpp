@@ -1,7 +1,7 @@
 #include "Shader2D.h"
 #include "vulkanbase/VulkanUtil.h"
 #include "vulkanbase/VulkanBase.h"
-
+#include "Vertex.h"
 
 void VulkanBase::initWindow() {
 	glfwInit();
@@ -11,10 +11,24 @@ void VulkanBase::initWindow() {
 }
 
 
-void Shader2D::initialize(const VkDevice& vkDevice)
+Shader2D::Shader2D(const std::string& vertexShaderFile, const std::string& fragmentShaderFile)
+{
+
+
+}
+
+void Shader2D::initialize(const VkPhysicalDevice& vkPhysicalDevice, const VkDevice& vkDevice)
 {
 	m_ShaderStage.push_back(createVertexShaderInfo(vkDevice));
 	m_ShaderStage.push_back(createFragmentShaderInfo(vkDevice));
+
+	m_UBOBuffer = std::make_unique<DAEDataBuffer>(
+		vkPhysicalDevice,
+		vkDevice,
+		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		sizeof(VertexUBO)
+	);
 
 }
 
@@ -79,6 +93,26 @@ VkPipelineInputAssemblyStateCreateInfo Shader2D::createInputAssemblyStateInfo()
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 	return inputAssembly;
+}
+
+void Shader2D::createDescriptorSetLayout(const VkDevice& vkDevice)
+{
+	VkDescriptorSetLayoutBinding uboLayoutBinding{};
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.descriptorCount = 1;
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+	VkDescriptorSetLayoutCreateInfo layoutInfo{};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = 1;
+	layoutInfo.pBindings = &uboLayoutBinding;
+
+	if (vkCreateDescriptorSetLayout(vkDevice, &layoutInfo, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create descriptor set layout!");
+	}
+
 }
 
 void VulkanBase::drawScene() {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "vulkanbase/VulkanBase.h"
-
+#include <Vertex.h>
 
 class xrxsPipeline {
 public:
@@ -15,6 +15,7 @@ private:
 
     // Method to encapsulate the draw calls and bindings
     void drawScene(VkCommandBuffer commandBuffer);
+    VkPushConstantRange createPushConstantRange();
 
     // Vulkan handles and objects
     VkPipeline m_Pipeline;
@@ -33,13 +34,14 @@ private:
     VkFormat m_SwapChainImageFormat;
     VkExtent2D m_SwapChainExtent;
 
-    std::unique_ptr<Shader2D> m_pShader;
+    //
     CommandBuffer m_Buffer;
     VkPipeline graphicsPipeline;
     VkPipelineLayout pipelineLayout;
+    std::unique_ptr<Shader2D> m_pShader;
 
 
     // Meshes and other renderable objects
-    //std::vector<Mesh> m_Meshes;
+    std::vector<MeshData> m_Meshes;
 
 };

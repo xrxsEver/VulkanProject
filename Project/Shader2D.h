@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 #include <array>
 #include <iostream>
+#include "DAEDataBuffer.h"
+#include "DAEDescriptorPool.h"
  
 class Shader2D
 {
@@ -12,16 +14,10 @@ class Shader2D
 public:
 	Shader2D(
 		const std::string& vertexShaderFile,
-		const std::string& fragmentShaderFile
-	) : m_VertexShaderFile{ vertexShaderFile },
-		m_FragmentShaderFile{ fragmentShaderFile }
-	{
-
-	}
-
+		const std::string& fragmentShaderFile);
 	~Shader2D() = default;
 
-	void initialize(const VkDevice& vkDevice);
+	void initialize(const VkPhysicalDevice& vkPhysicalDevice, const VkDevice& vkDevice);
 	void destroyShaderModules(const VkDevice& vkDevice);
 
 	std::vector<VkPipelineShaderStageCreateInfo>&
@@ -32,7 +28,18 @@ public:
 	VkPipelineVertexInputStateCreateInfo createVertexInputStateInfo();
 	VkPipelineInputAssemblyStateCreateInfo createInputAssemblyStateInfo();
 
+	void createDescriptorSetLayout(const VkDevice& vkDevice);
+	const VkDescriptorSetLayout& getDescriptorSetLayout()
+	{
+		return m_DescriptorSetLayout;
+	}
+	void bindDescriptorSet(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, size_t index);
+
 private:
+	VkDescriptorSetLayout m_DescriptorSetLayout;
+	std::unique_ptr<DAEDataBuffer> m_UBOBuffer;
+	VertexUBO m_UBOSrc;
+	std::unique_ptr<DAEDescriptorPool> m_DescriptorPool;
 
 	VkPipelineShaderStageCreateInfo createFragmentShaderInfo(const VkDevice& vkDevice);
 	VkPipelineShaderStageCreateInfo createVertexShaderInfo(const VkDevice& vkDevice);
