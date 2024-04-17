@@ -30,7 +30,7 @@ set(SOURCES
     "vulkanbase/VulkanUtil.h"
     "vulkanbase/VulkanUtil.cpp"
     # Add other source files here
-    
+    ""
      
     "labwork/Week03.cpp" 
     "labwork/Week04.cpp" 
@@ -39,7 +39,7 @@ set(SOURCES
 )
 
 # Create the executable
-add_executable(${PROJECT_NAME} ${SOURCES} ${GLSL_SOURCE_FILES}  "Shader2D.h" "Shader2D.cpp"  "Command/CommandPool.h" "Command/CommandBuffer.h" "Command/CommandPool.cpp" "Command/CommandBuffer.cpp")
+add_executable(${PROJECT_NAME} ${SOURCES} ${GLSL_SOURCE_FILES}  "Shader2D.h" "Shader2D.cpp"  "Command/CommandPool.h" "Command/CommandBuffer.h" "Command/CommandPool.cpp" "Command/CommandBuffer.cpp" "xrxsPipeline.h" "xrxsPipeline.cpp")
 add_dependencies(${PROJECT_NAME} Shaders)
 # Link libraries
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

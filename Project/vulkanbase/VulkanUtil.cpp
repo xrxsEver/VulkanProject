@@ -54,11 +54,11 @@ namespace VkUtils {
 		int i = 0;
 		for (const auto& queueFamily : queueFamilies) {
 			// Print properties of each queue family
-			std::cout << "Queue Family " << i << " Properties:" << std::endl;
-			std::cout << "\tQueue Count: " << queueFamily.queueCount << std::endl;
-			std::cout << "\tQueue Flags: " << queueFamily.queueFlags << std::endl;
-			std::cout << "\tTimestamp Valid Bits: " << queueFamily.timestampValidBits << std::endl;
-			std::cout << "\tMin Image Transfer Granularity: (" << queueFamily.minImageTransferGranularity.width << ", " << queueFamily.minImageTransferGranularity.height << ", " << queueFamily.minImageTransferGranularity.depth << ")" << std::endl;
+			// std::cout << "Queue Family " << i << " Properties:" << std::endl;
+			// std::cout << "\tQueue Count: " << queueFamily.queueCount << std::endl;
+			// std::cout << "\tQueue Flags: " << queueFamily.queueFlags << std::endl;
+			// std::cout << "\tTimestamp Valid Bits: " << queueFamily.timestampValidBits << std::endl;
+			// std::cout << "\tMin Image Transfer Granularity: (" << queueFamily.minImageTransferGranularity.width << ", " << queueFamily.minImageTransferGranularity.height << ", " << queueFamily.minImageTransferGranularity.depth << ")" << std::endl;
 
 			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 				indices.graphicsFamily = i;
@@ -66,7 +66,7 @@ namespace VkUtils {
 
 			VkBool32 presentSupport = false;
 			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-			std::cout << "Queue Family " << i << " Present Support: " << (presentSupport ? "Supported" : "Not Supported") << std::endl;
+			// std::cout << "Queue Family " << i << " Present Support: " << (presentSupport ? "Supported" : "Not Supported") << std::endl;
 
 			if (presentSupport) {
 				indices.presentFamily = i;

@@ -18,6 +18,7 @@
 #include <limits>
 #include <algorithm>
 #include "Shader2D.h"
+#include "xrxsPipeline.h"
 
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
@@ -58,9 +59,8 @@ public:
 
 
 private:
-
-
 	
+	xrxsPipeline m_Pipeline;
 
 
 	void initVulkan() {
@@ -72,19 +72,19 @@ private:
 		pickPhysicalDevice();
 		createLogicalDevice();
 		// week 04 
+
+		m_GradientShader.initialize(device);
+
 		createSwapChain();
 		createImageViews();
 
 	
 		// week 03
 		createRenderPass();
-		createGraphicsPipeline();
+		m_Pipeline.initialize(device);
 		createFrameBuffers();
 		// week 02
 		
-		
-		//createCommandPool();
-		//createCommandBuffer();
 		m_CommandPool.initialize(device, physicalDevice, surface);
 		m_CommandBuffer = m_CommandPool.createCommandBuffer();
 
@@ -152,7 +152,6 @@ private:
 
 	GLFWwindow* window;
 	void initWindow();
-	std::unique_ptr<Shader2D> m_pShader;
 
 
 	CommandPool m_CommandPool;
@@ -160,17 +159,9 @@ private:
 
 	
 	void drawScene();
-
 	void drawFrame(uint32_t imageIndex);
-//	void createCommandBuffer();
-//	void createCommandPool(); 
-//	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void createVertexBuffer();
 
-	// Week 03
-	// Renderpass concept
-	// Graphics pipeline
-	
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
@@ -180,11 +171,8 @@ private:
 
 	void createFrameBuffers();
 	void createRenderPass();
-	void createGraphicsPipeline();
 
-	// Week 04
-	// Swap chain and image view support
-
+	
 	VkSwapchainKHR swapChain;
 	std::vector<VkImage> swapChainImages;
 	VkFormat swapChainImageFormat;
