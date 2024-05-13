@@ -45,7 +45,7 @@ set(SOURCES
     "DAEDescriptorPool.cpp" 
     "vulkanbase/VulkanBase.cpp"
     "RenderPassManagement.h"
-     
+    "SwapChainManager.h"
      
      
     

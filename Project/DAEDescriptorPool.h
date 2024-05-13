@@ -16,7 +16,7 @@ public:
 	void initialize(const VkUtils::VulkanContext& context);
 
 	void setUBO(UBO data, size_t index);
-	std::vector<DAEUniformBufferObject> m_UBOs; 
+	std::vector<DAEUniformBufferObject<UBO> > m_UBOs;
 
 
 	const VkDescriptorSetLayout& getDescriptorSetLayout()

@@ -30,7 +30,7 @@ void DAEMesh::destroyMesh(VkDevice device) {
 // Add a vertex to the mesh
 void DAEMesh::addVertex(glm::vec2 pos, glm::vec3 color) {
     Vertex vertex;
-    vertex.position = pos;
+    vertex.pos = pos;
     vertex.color = color;
     m_Vertices.push_back(vertex);
 }

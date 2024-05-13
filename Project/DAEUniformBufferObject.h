@@ -3,6 +3,8 @@
 #include "vulkanbase/VulkanUtil.h"
 #include "DAEDataBuffer.h"
 
+class DAEDataBuffer;
+
 template <class UBO>
 class DAEUniformBufferObject
 {

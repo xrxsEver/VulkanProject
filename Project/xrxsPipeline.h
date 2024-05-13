@@ -2,6 +2,7 @@
 
 #include "vulkanbase/VulkanBase.h"
 #include <Vertex.h>
+#include "Command/CommandBuffer.h"
 
 class xrxsPipeline {
 public:
@@ -33,7 +34,7 @@ private:
     VkExtent2D m_SwapChainExtent;
 
     
-    CommandBuffer m_Buffer;
+    CommandBuffer m_Buffer; //herer is error 
     VkPipeline graphicsPipeline;
     VkPipelineLayout pipelineLayout;
     std::unique_ptr<Shader2D> m_pShader;

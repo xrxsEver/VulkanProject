@@ -8,7 +8,9 @@
 #include "DAEDataBuffer.h"
 #include "DAEDescriptorPool.h"
 #include "Vertex.h"
+#include "Command/CommandBuffer.h"
 
+class DAEDataBuffer;
 class Shader2D
 {
 
@@ -40,7 +42,7 @@ private:
 	VkDescriptorSetLayout m_DescriptorSetLayout;
 	std::unique_ptr<DAEDataBuffer> m_UBOBuffer;
 
-	std::unique_ptr<DAEDescriptorPool<VertexUBO>> m_DescriptorPool;
+	std::unique_ptr<DAEDescriptorPool<VertexUBO> > m_DescriptorPool;
 
 	VkPipelineShaderStageCreateInfo createFragmentShaderInfo(const VkDevice& vkDevice);
 	VkPipelineShaderStageCreateInfo createVertexShaderInfo(const VkDevice& vkDevice);

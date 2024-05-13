@@ -5,6 +5,7 @@
 #include "Vertex.h"
 #include "glm/glm.hpp"
 
+class DAEDataBuffer;
 class DAEMesh
 {
 public:

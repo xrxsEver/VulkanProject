@@ -18,7 +18,8 @@ std::vector<const char*> deviceExtensions = {
 };
 const int MAX_FRAMES_IN_FLIGHT = 2;  
 
-
+class xrxsPipeline;
+class DAEMesh;
 class VulkanBase {
 public:
     VulkanBase();
