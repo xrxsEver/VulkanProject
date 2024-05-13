@@ -115,6 +115,29 @@ void Shader2D::createDescriptorSetLayout(const VkDevice& vkDevice)
 
 }
 
+void Shader2D::bindDescriptorSet(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, size_t index) {
+	// Assuming descriptorSets is an array or vector of VkDescriptorSet already initialized elsewhere in your application
+	std::vector<VkDescriptorSet> descriptorSets;
+
+	// Check if the index is valid
+	if (index >= descriptorSets.size()) {
+		throw std::runtime_error("Descriptor set index is out of range.");
+	}
+
+	// The actual Vulkan function to bind the descriptor set to the command buffer
+	vkCmdBindDescriptorSets(
+		commandBuffer,                      
+		VK_PIPELINE_BIND_POINT_GRAPHICS,    
+		pipelineLayout,                     
+		0,                                  
+		1,                                  
+		&descriptorSets[index],             
+		0,                                  
+		nullptr                             
+	);
+}
+
+
 void VulkanBase::drawScene() {
 	VkCommandBuffer commandBuffer = m_CommandBuffer.getVkCommandBuffer();
 
@@ -141,7 +164,7 @@ void VulkanBase::drawFrame() {
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
 
-	vkCmdBeginRenderPass(m_CommandBuffer.getVkCommandBuffer(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(m_CommandBuffers.getVkCommandBuffer(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(m_CommandBuffer.getVkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 

@@ -1,11 +1,13 @@
+#pragma once
+
 #include <glm/glm.hpp>
 
-struct Vertex
-{
-	glm::vec2 position;
-	glm::vec3 color;
-};
 
+struct Vertex {
+	glm::vec2 pos;
+	glm::vec3 color;
+
+};
 
 struct VertexUBO {
 	glm::mat4 model;

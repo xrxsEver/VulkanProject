@@ -3,6 +3,8 @@
 #include <vector>
 #include <memory>
 #include "DAEDataBuffer.h"
+#include <DAEUniformBufferObject.h>
+
 
 template <class UBO>
 class DAEDescriptorPool
@@ -14,7 +16,7 @@ public:
 	void initialize(const VkUtils::VulkanContext& context);
 
 	void setUBO(UBO data, size_t index);
-	std::vector<DAEUniformBufferObjectPtr<UBO>> m_UBOs; 
+	std::vector<DAEUniformBufferObject> m_UBOs; 
 
 
 	const VkDescriptorSetLayout& getDescriptorSetLayout()

@@ -4,6 +4,7 @@
 #include "DAEDataBuffer.h"
 #include "Vertex.h"
 #include "glm/glm.hpp"
+
 class DAEMesh
 {
 public:

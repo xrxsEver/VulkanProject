@@ -13,6 +13,12 @@ const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
 
+std::vector<const char*> deviceExtensions = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
+const int MAX_FRAMES_IN_FLIGHT = 2;  
+
+
 class VulkanBase {
 public:
     VulkanBase();
@@ -30,8 +36,6 @@ private:
     void createSurface();
     void pickPhysicalDevice();
     void createLogicalDevice();
-    void createSwapChain();
-    void createImageViews();
     void createRenderPass();
     void createGraphicsPipeline();
     void createFrameBuffers();
@@ -49,6 +53,8 @@ private:
     VkQueue presentQueue;
     VkSurfaceKHR surface;
     VkSwapchainKHR swapChain;
+    SwapChainManager swapChainManager;
+
     std::vector<VkImage> swapChainImages;
     std::vector<VkImageView> swapChainImageViews;
     std::vector<VkFramebuffer> swapChainFramebuffers;

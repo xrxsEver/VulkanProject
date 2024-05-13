@@ -7,6 +7,7 @@ template <class UBO>
 class DAEUniformBufferObject
 {
 public:
+
 	void initialize(const VulkanContext& context);
 	void upload();
 	void setData(UBO ubo) {

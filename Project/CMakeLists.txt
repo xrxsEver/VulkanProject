@@ -29,8 +29,22 @@ set(SOURCES
     "vulkanbase/VulkanBase.h" 
     "vulkanbase/VulkanUtil.h"
     "vulkanbase/VulkanUtil.cpp"
-    # Add other source files here
-     "Command/CommandPool.h" "Command/CommandBuffer.h" "Command/CommandPool.cpp" "Command/CommandBuffer.cpp" "xrxsPipeline.h" "xrxsPipeline.cpp" "Vertex.h" "DAEMesh.h" "DAEMesh.cpp" "DAEDescriptorPool.h" "DAEUniformBufferObject.h" "DAEDataBuffer.h" "DAEDataBuffer.cpp" "DAEDescriptorPool.cpp" "vulkanbase/VulkanBase.cpp"  "RenderPassManagement.h"
+    "Command/CommandPool.h" 
+    "Command/CommandBuffer.h"
+    "Command/CommandPool.cpp"
+    "Command/CommandBuffer.cpp"
+    "xrxsPipeline.h"
+    "xrxsPipeline.cpp" 
+    "Vertex.h" 
+    "DAEMesh.h"
+    "DAEMesh.cpp"
+    "DAEDescriptorPool.h"
+    "DAEUniformBufferObject.h" 
+    "DAEDataBuffer.h"
+    "DAEDataBuffer.cpp"
+    "DAEDescriptorPool.cpp" 
+    "vulkanbase/VulkanBase.cpp"
+    "RenderPassManagement.h"
      
      
      

@@ -20,10 +20,10 @@ void DAEMesh::initialize(VkPhysicalDevice physicalDevice, VkDevice device) {
 // Destroy mesh resources
 void DAEMesh::destroyMesh(VkDevice device) {
     if (m_VertexBuffer) {
-        m_VertexBuffer->destroyBuffer(device);
+        m_VertexBuffer->destroy();
     }
     if (m_IndexBuffer) {
-        m_IndexBuffer->destroyBuffer(device);
+        m_IndexBuffer->destroy();
     }
 }
 

@@ -5,9 +5,16 @@
 #include "vulkanbase/VulkanBase.h"
 #include "vulkanbase/VulkanUtil.h"
 
+struct SwapChainSupportDetails {
+    VkSurfaceCapabilitiesKHR capabilities;    // Capabilities of the surface
+    std::vector<VkSurfaceFormatKHR> formats;  // Formats supported by the surface
+    std::vector<VkPresentModeKHR> presentModes;  // Presentation modes supported by the surface
+};
+
+
 class SwapChainManager {
 public:
-    SwapChainManager(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+    SwapChainManager(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, GLFWwindow* window);
     ~SwapChainManager();
 
     void createSwapChain();
@@ -24,6 +31,7 @@ private:
     VkDevice m_device;
     VkPhysicalDevice m_physicalDevice;
     VkSurfaceKHR m_surface;
+    GLFWwindow* m_window; 
 
     VkSwapchainKHR m_swapChain;
     std::vector<VkImage> m_swapChainImages;
