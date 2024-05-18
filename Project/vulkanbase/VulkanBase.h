@@ -79,6 +79,8 @@ private:
     std::unique_ptr<CommandPool> m_CommandPool;
     std::unique_ptr<xrxsPipeline> m_Pipeline;
     std::unique_ptr<DAEMesh> m_Mesh;
+    CommandBuffer m_CommandBuffer;
+    xrxsPipeline m_pPipeline;
 
     void createVertexBuffer();
     void createIndexBuffer();

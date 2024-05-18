@@ -10,6 +10,7 @@
 #include "Vertex.h"
 #include "Command/CommandBuffer.h"
 
+
 class DAEDataBuffer;
 class Shader2D
 {
@@ -59,6 +60,10 @@ private:
 
 	Shader2D(const Shader2D&&) = delete;
 	Shader2D& operator=(const Shader2D&&) = delete;
+
+
+
+
 };
 
 

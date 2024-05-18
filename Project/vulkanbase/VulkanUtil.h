@@ -58,3 +58,14 @@ namespace VkUtils
 
 
 }
+
+struct VulkanContext {
+	VkInstance instance;
+	VkDevice device;
+	VkPhysicalDevice physicalDevice;
+	VkQueue graphicsQueue;
+	VkSurfaceKHR surface;
+
+	// Constructor for initialization if required
+	VulkanContext() : instance(nullptr), device(nullptr), physicalDevice(nullptr), graphicsQueue(nullptr), surface(nullptr) {}
+};

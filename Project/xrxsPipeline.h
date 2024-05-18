@@ -1,19 +1,20 @@
 #pragma once
 
-#include "vulkanbase/VulkanBase.h"
 #include <Vertex.h>
 #include "Command/CommandBuffer.h"
+#include <vector>
+#include <memory>
 
 class xrxsPipeline {
 public:
     void initialize(VkDevice device);
     void recordCommands(VkCommandBuffer commandBuffer);
+    void drawScene(VkCommandBuffer commandBuffer);
 
 private:
     void createGraphicsPipeline(VkDevice device);
     void createShaderModules();
 
-    void drawScene(VkCommandBuffer commandBuffer);
     VkPushConstantRange createPushConstantRange();
 
     // Vulkan handles and objects
@@ -34,11 +35,11 @@ private:
     VkExtent2D m_SwapChainExtent;
 
     
-    CommandBuffer m_Buffer; //herer is error 
+    CommandBuffer m_Buffer; //here is error 
     VkPipeline graphicsPipeline;
     VkPipelineLayout pipelineLayout;
-    std::unique_ptr<Shader2D> m_pShader;
 
+    std::unique_ptr<Shader2D> shader2DPtr;
 
     // Meshes and other renderable objects
     std::vector<MeshData> m_Meshes;

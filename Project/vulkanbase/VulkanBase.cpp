@@ -140,6 +140,21 @@ void VulkanBase::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInf
     //createInfo.pfnUserCallback = debugCallback;
 }
 
+
+void VulkanBase::drawScene() {
+    VkCommandBuffer commandBuffer = m_CommandBuffer.getVkCommandBuffer();
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    m_pPipeline.drawScene(commandBuffer);
+
+    vkEndCommandBuffer(commandBuffer);
+
+
+}
+
 void VulkanBase::setupDebugMessenger() {
     if (!VkUtils::enableValidationLayers) return;
 

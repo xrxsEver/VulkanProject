@@ -5,6 +5,7 @@
 #include "vulkanbase/VulkanBase.h"
 
 void xrxsPipeline::initialize(VkDevice device) {
+    std::unique_ptr<Shader2D> shader2DPtr = std::make_unique<Shader2D>("vertexShader.vsh", "fragmentShader.fsh");
     createShaderModules();
     createGraphicsPipeline(device);
 }
@@ -75,9 +76,8 @@ void xrxsPipeline::createGraphicsPipeline(VkDevice device) {
 
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    m_pShader = nullptr;
 
-    auto& shaderStages = m_pShader->Shader2D::getShaderStages();
+    auto& shaderStages = shader2DPtr->Shader2D::getShaderStages();
 
     if (shaderStages.size() < 2) {
         throw std::runtime_error("Shader stages are not properly initialized.");
