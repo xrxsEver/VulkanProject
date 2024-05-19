@@ -3,8 +3,7 @@
 #include <vector>
 #include <memory>
 #include <vulkan/vulkan.h>
-#include "DAEDataBuffer.h"
-#include "DAEUniformBufferObject.h"
+#include "vulkanbase/VulkanUtil.h"
 
 template <class UBO>
 class DAEDescriptorPool {

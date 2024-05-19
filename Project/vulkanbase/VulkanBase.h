@@ -2,12 +2,14 @@
 
 #include <GLFW/glfw3.h>
 #include "VulkanUtil.h"
-#include "Shader2D.h"
-#include "xrxsPipeline.h"
-#include "DAEMesh.h"
-#include "command/CommandPool.h"
-#include "Command/CommandBuffer.h"
-#include "SwapChainManager.h"
+#include <memory>
+
+class Shader2D;
+class xrxsPipeline;
+class DAEMesh;
+class CommandPool;
+class CommandBuffer;
+class SwapChainManager;
 
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
@@ -16,10 +18,9 @@ const std::vector<const char*> validationLayers = {
 std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
-const int MAX_FRAMES_IN_FLIGHT = 2;  
 
-class xrxsPipeline;
-class DAEMesh;
+const int MAX_FRAMES_IN_FLIGHT = 2;
+
 class VulkanBase {
 public:
     VulkanBase();
@@ -55,7 +56,7 @@ private:
     VkQueue presentQueue;
     VkSurfaceKHR surface;
     VkSwapchainKHR swapChain;
-    SwapChainManager swapChainManager;
+    std::unique_ptr<SwapChainManager> swapChainManager;
 
     std::vector<VkImage> swapChainImages;
     std::vector<VkImageView> swapChainImageViews;
@@ -73,15 +74,14 @@ private:
 
     bool framebufferResized = false;
     bool isDeviceSuitable(VkPhysicalDevice device);
-    bool  checkValidationLayerSupport();
+    bool checkValidationLayerSupport();
 
     VkDebugUtilsMessengerEXT debugMessenger;
-    Shader2D shader2D;
+    std::unique_ptr<Shader2D> shader2D;
     std::unique_ptr<CommandPool> m_CommandPool;
     std::unique_ptr<xrxsPipeline> m_Pipeline;
     std::unique_ptr<DAEMesh> m_Mesh;
-    CommandBuffer m_CommandBuffer;
-    xrxsPipeline m_pPipeline;
+    CommandBuffer* m_CommandBuffer;
 
     void createVertexBuffer();
     void createIndexBuffer();

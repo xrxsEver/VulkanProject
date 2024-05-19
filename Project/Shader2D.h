@@ -4,8 +4,8 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "DAEDescriptorPool.h"  // Include the DAEDescriptorPool header
-#include "Vertex.h"
+#include "DAEDescriptorPool.h"
+#include <Vertex.h>
 
 class Shader2D {
 public:
@@ -17,7 +17,7 @@ public:
     std::vector<VkPipelineShaderStageCreateInfo> getShaderStages() const;
 
 private:
-    std::unique_ptr<DAEDescriptorPool<VertexUBO>> m_DescriptorPool;  // Use the template class
+    std::unique_ptr<DAEDescriptorPool<VertexUBO>> m_DescriptorPool;
     std::string m_VertexShaderFile;
     std::string m_FragmentShaderFile;
     VkShaderModule m_VertexShaderModule;
