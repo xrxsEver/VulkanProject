@@ -132,6 +132,13 @@ void VulkanBase::createInstance() {
     }
 }
 
+void VulkanBase::initializeShaders()
+{
+    size_t count = 10; // Example count, set according to your requirements
+    shader2D.initialize(physicalDevice, device, count);
+
+}
+
 void VulkanBase::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
     createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;

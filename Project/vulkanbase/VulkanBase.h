@@ -33,6 +33,7 @@ private:
     void cleanup();
 
     void createInstance();
+    void initializeShaders();
     void setupDebugMessenger();
     void createSurface();
     void pickPhysicalDevice();
@@ -75,7 +76,7 @@ private:
     bool  checkValidationLayerSupport();
 
     VkDebugUtilsMessengerEXT debugMessenger;
-    std::unique_ptr<Shader2D> m_GradientShader;
+    Shader2D shader2D;
     std::unique_ptr<CommandPool> m_CommandPool;
     std::unique_ptr<xrxsPipeline> m_Pipeline;
     std::unique_ptr<DAEMesh> m_Mesh;
