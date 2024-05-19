@@ -30,5 +30,4 @@ void DAEUniformBufferObject<UBO>::upload() {
 }
 
 // Explicit template instantiation
-template class DAEUniformBufferObject<VertexUBO>;  
 

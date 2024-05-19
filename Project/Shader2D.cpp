@@ -5,7 +5,7 @@
 Shader2D::Shader2D(const std::string& vertexShaderFile, const std::string& fragmentShaderFile)
     : m_VertexShaderFile(vertexShaderFile), m_FragmentShaderFile(fragmentShaderFile) {}
 
-void Shader2D::initialize(const VkDevice& vkDevice, size_t count) {
+void Shader2D::initialize(const VkPhysicalDevice& vkPhysicalDevice, const VkDevice& vkDevice, size_t count) {
     m_DescriptorPool = std::make_unique<DAEDescriptorPool<VertexUBO>>(vkDevice, count);
 
     m_VertexShaderModule = createShaderModule(vkDevice, VkUtils::readFile(m_VertexShaderFile));

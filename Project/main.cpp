@@ -1,4 +1,5 @@
 #include "vulkanbase/VulkanBase.h"
+#include <iostream>
 
 int main() {
 	// DISABLE_LAYER_AMD_SWITCHABLE_GRAPHICS_1 = 1

@@ -2,22 +2,22 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
-#include <string>
 #include <memory>
-#include "DAEDescriptorPool.h"
+#include <string>
+#include "DAEDescriptorPool.h"  // Include the DAEDescriptorPool header
 #include "Vertex.h"
 
 class Shader2D {
 public:
     Shader2D(const std::string& vertexShaderFile, const std::string& fragmentShaderFile);
 
-    void initialize(const VkDevice& vkDevice, size_t count);
+    void initialize(const VkPhysicalDevice& vkPhysicalDevice, const VkDevice& vkDevice, size_t count);
     void destroyShaderModules(const VkDevice& vkDevice);
 
     std::vector<VkPipelineShaderStageCreateInfo> getShaderStages() const;
 
 private:
-    std::unique_ptr<DAEDescriptorPool<VertexUBO>> m_DescriptorPool;
+    std::unique_ptr<DAEDescriptorPool<VertexUBO>> m_DescriptorPool;  // Use the template class
     std::string m_VertexShaderFile;
     std::string m_FragmentShaderFile;
     VkShaderModule m_VertexShaderModule;

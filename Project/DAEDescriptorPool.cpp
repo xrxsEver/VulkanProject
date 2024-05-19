@@ -95,4 +95,3 @@ void DAEDescriptorPool<UBO>::createUBOs(const VkUtils::VulkanContext& context)
     for (size_t i = 0; i < m_Count; i
 
 }
-

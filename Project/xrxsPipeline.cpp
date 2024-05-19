@@ -3,8 +3,8 @@
 #include "vulkanbase/VulkanUtil.h"
 #include <stdexcept>
 
-void xrxsPipeline::initialize(VkDevice device, Shader2D& shader2D) {
-    shader2D.initialize(device, 10);  // Example count, adjust as needed
+void xrxsPipeline::initialize(VkPhysicalDevice physicalDevice,VkDevice device, Shader2D& shader2D) {
+    shader2D.initialize(physicalDevice,device, 10);  // Example count, adjust as needed
     createGraphicsPipeline(device, shader2D);
 }
 
@@ -105,7 +105,7 @@ void xrxsPipeline::createGraphicsPipeline(VkDevice device, Shader2D& shader2D) {
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.layout = m_PipelineLayout;
-    pipelineInfo.renderPass = renderPass;  // Ensure renderPass is set correctly
+    pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 

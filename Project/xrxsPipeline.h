@@ -8,7 +8,7 @@
 
 class xrxsPipeline {
 public:
-    void initialize(VkDevice device, Shader2D& shader2D);
+    void initialize(VkPhysicalDevice physicalDevice, VkDevice device, Shader2D& shader2D);
     void recordCommands(VkCommandBuffer commandBuffer);
     void drawScene(VkCommandBuffer commandBuffer);
 
