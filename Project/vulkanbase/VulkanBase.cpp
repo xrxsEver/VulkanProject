@@ -14,6 +14,7 @@
 VulkanBase::VulkanBase() {
     initWindow();
     initVulkan();
+    initializeUBO();
 }
 
 const std::vector<const char*> validationLayers = {
@@ -167,6 +168,17 @@ void VulkanBase::drawScene() {
     m_Pipeline->drawScene(commandBuffer); 
 
     vkEndCommandBuffer(commandBuffer);
+}
+
+void VulkanBase::initializeUBO()
+{
+    VkBufferUsageFlags usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    VkDeviceSize bufferSize = sizeof(VertexUBO);
+
+    // Create the UBO object with all required parameters
+    DAEUniformBufferObject<VertexUBO> uboObject(physicalDevice, device, usage, properties, bufferSize);
+
 }
 
 

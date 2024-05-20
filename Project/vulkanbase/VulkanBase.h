@@ -46,6 +46,8 @@ private:
     void drawFrame();
     void drawScene();
 
+    void initializeUBO();
+
     GLFWwindow* window;
     VkInstance instance;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;

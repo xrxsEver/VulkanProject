@@ -1,9 +1,9 @@
-#pragma once 
+#pragma once
 
 #include "vulkanbase/VulkanBase.h"
 #include <stdexcept>
-class DAEDataBuffer
-{
+
+class DAEDataBuffer {
 public:
     DAEDataBuffer(
         VkPhysicalDevice physicalDevice,
@@ -18,12 +18,16 @@ public:
     }
 
     void upload(VkDeviceSize size, void* data);
+    void update();
     void map(VkDeviceSize size, void* data);
     void destroy();
     void bindAsVertexBuffer(VkCommandBuffer commandBuffer);
     void bindAsIndexBuffer(VkCommandBuffer commandBuffer);
     VkBuffer getVkBuffer();
     VkDeviceSize getSizeInBytes();
+    VkDevice getDevice() const { return m_VkDevice; }  // Add this method
+    VkDeviceMemory getMemory() const { return m_VkBufferMemory; }  // Add this method
+
 private:
     uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 

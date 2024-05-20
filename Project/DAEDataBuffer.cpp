@@ -38,6 +38,10 @@ void DAEDataBuffer::upload(VkDeviceSize size, void* data)
     vkUnmapMemory(m_VkDevice, m_VkBufferMemory);
 }
 
+void DAEDataBuffer::update()
+{
+}
+
 void DAEDataBuffer::map(VkDeviceSize size, void* data)
 {
     vkMapMemory(m_VkDevice, m_VkBufferMemory, 0, size, 0, &data);

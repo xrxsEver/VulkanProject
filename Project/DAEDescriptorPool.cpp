@@ -92,10 +92,23 @@ void DAEDescriptorPool<UBO>::createDescriptorSetLayout(const VkUtils::VulkanCont
 template <class UBO>
 void DAEDescriptorPool<UBO>::createUBOs(const VkUtils::VulkanContext& context) {
     m_UBOs.resize(m_Count);
+
+    VkBufferUsageFlags usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    VkMemoryPropertyFlags properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    VkDeviceSize bufferSize = sizeof(UBO);
+
     for (size_t i = 0; i < m_Count; i++) {
-        // Initialize each UBO
-        m_UBOs[i] = std::make_unique<DAEUniformBufferObject<UBO>>(context.device, sizeof(UBO));
+        // Initialize each UBO with all required parameters and move it into the vector
+        m_UBOs[i] = std::make_unique<DAEUniformBufferObject<UBO>>(
+            context.physicalDevice,
+            context.device,
+            usage,
+            properties,
+            bufferSize
+        );
     }
 }
+
+
 
 template class DAEDescriptorPool<VertexUBO>;
