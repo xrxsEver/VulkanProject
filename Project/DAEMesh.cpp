@@ -8,9 +8,22 @@ DAEMesh::DAEMesh() {
 
 // Initialize mesh resources
 void DAEMesh::initialize(VkPhysicalDevice physicalDevice, VkDevice device) {
-    m_VertexBuffer = std::make_unique<DAEDataBuffer>(device, physicalDevice, sizeof(Vertex) * m_Vertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-    m_IndexBuffer = std::make_unique<DAEDataBuffer>(device, physicalDevice, sizeof(uint16_t) * m_Indices.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+    m_VertexBuffer = std::make_unique<DAEDataBuffer>(
+        physicalDevice,
+        device,
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ,// Example properties, adjust as needed
+        sizeof(Vertex) * m_Vertices.size()
+    );
 
+    m_IndexBuffer = std::make_unique<DAEDataBuffer>(
+        physicalDevice,
+        device,
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, // Example properties, adjust as needed
+        sizeof(uint16_t) * m_Indices.size()
+
+    );
     // Transfer vertex data to GPU
     m_VertexBuffer->upload(sizeof(Vertex) * m_Vertices.size(), m_Vertices.data());
     // Transfer index data to GPU

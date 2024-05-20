@@ -1,4 +1,7 @@
 #include "VulkanBase.h"
+#include "SwapChainManager.h"
+#include "Command/CommandBuffer.h"
+#include "Shader2D.h"
 #include <iostream>
 #include <stdexcept>
 #include <functional>
@@ -129,12 +132,6 @@ void VulkanBase::createInstance() {
     }
 }
 
-void VulkanBase::initializeShaders() {
-    shader2D = std::make_unique<Shader2D>("vertexShader.spv", "fragmentShader.spv");
-    size_t count = 10; // Example count, set according to your requirements
-    shader2D->initialize(physicalDevice, device, count)
-}
-
 void VulkanBase::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
     createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -149,10 +146,11 @@ void VulkanBase::drawScene() {
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-    m_pPipeline->drawScene(commandBuffer);
+    m_Pipeline->drawScene(commandBuffer); // This line should work
 
     vkEndCommandBuffer(commandBuffer);
 }
+
 
 void VulkanBase::setupDebugMessenger() {
     if (!VkUtils::enableValidationLayers) return;

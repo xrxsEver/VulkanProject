@@ -4,6 +4,7 @@
 #include <memory>
 #include <vulkan/vulkan.h>
 #include "vulkanbase/VulkanUtil.h"
+#include "DAEUniformBufferObject.h" // Ensure this header is correct and included
 
 template <class UBO>
 class DAEDescriptorPool {
