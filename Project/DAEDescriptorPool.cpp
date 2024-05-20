@@ -1,4 +1,5 @@
 #include "DAEDescriptorPool.h"
+#include "DAEUniformBufferObject.h"
 #include <stdexcept>
 
 template <class UBO>
@@ -25,7 +26,7 @@ void DAEDescriptorPool<UBO>::setUBO(UBO data, size_t index) {
     if (index >= m_UBOs.size()) {
         throw std::out_of_range("Index out of range");
     }
-    m_UBOs[index]->update(data);
+    m_UBOs[index]->update(data); // Ensure DAEUniformBufferObject<UBO> has update method
 }
 
 template <class UBO>
@@ -88,12 +89,13 @@ void DAEDescriptorPool<UBO>::createDescriptorSetLayout(const VkUtils::VulkanCont
     }
 }
 
-template<class UBO>
-void DAEDescriptorPool<UBO>::createUBOs(const VkUtils::VulkanContext& context)
-{
+template <class UBO>
+void DAEDescriptorPool<UBO>::createUBOs(const VkUtils::VulkanContext& context) {
     m_UBOs.resize(m_Count);
     for (size_t i = 0; i < m_Count; i++) {
-        // Add code to initialize each UBO if necessary
+        // Initialize each UBO
         m_UBOs[i] = std::make_unique<DAEUniformBufferObject<UBO>>(context.device, sizeof(UBO));
     }
 }
+
+template class DAEDescriptorPool<VertexUBO>;

@@ -16,6 +16,14 @@ VulkanBase::VulkanBase() {
     initVulkan();
 }
 
+const std::vector<const char*> validationLayers = {
+    "VK_LAYER_KHRONOS_validation"
+};
+
+std::vector<const char*> deviceExtensions = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
+
 VulkanBase::~VulkanBase() {
     cleanup();
 }
@@ -301,4 +309,26 @@ void VulkanBase::createSyncObjects() {
 
 void VulkanBase::drawFrame() {
     // Implementation for drawing a frame
+}
+
+
+bool VulkanBase::checkValidationLayerSupport() {
+    // Implementation for checking validation layer support
+    return true; // Example return value
+}
+
+bool VulkanBase::isDeviceSuitable(VkPhysicalDevice device) {
+    // Implementation for checking if the device is suitable
+    return true; // Example return value
+}
+
+std::vector<const char*> VulkanBase::getRequiredExtensions() {
+    // Implementation for getting required extensions
+    return {}; // Example return value
+}
+
+void VulkanBase::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+    // Implementation for framebuffer resize callback
+    auto app = reinterpret_cast<VulkanBase*>(glfwGetWindowUserPointer(window));
+    app->framebufferResized = true;
 }
