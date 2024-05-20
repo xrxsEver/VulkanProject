@@ -1,7 +1,10 @@
 #include "VulkanBase.h"
 #include "SwapChainManager.h"
 #include "Command/CommandBuffer.h"
+#include "Command/CommandPool.h"
 #include "Shader2D.h"
+#include "xrxsPipeline.h"  // Include xrxsPipeline here
+#include "DAEMesh.h"       // Include DAEMesh here
 #include <iostream>
 #include <stdexcept>
 #include <functional>
@@ -40,6 +43,7 @@ void VulkanBase::initVulkan() {
     swapChainManager = std::make_unique<SwapChainManager>(device, physicalDevice, surface, window);
     swapChainManager->createSwapChain();
     swapChainManager->createImageViews();
+  
 
     createRenderPass();
     createGraphicsPipeline();
@@ -47,6 +51,12 @@ void VulkanBase::initVulkan() {
     createCommandPool();
     createCommandBuffers();
     createSyncObjects();
+
+    // Initialize pipeline
+    m_Pipeline = std::make_unique<xrxsPipeline>();
+    
+    m_Pipeline->initialize(physicalDevice, device, renderPass, *shader2D);
+
 }
 
 void VulkanBase::mainLoop() {
@@ -146,7 +156,7 @@ void VulkanBase::drawScene() {
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-    m_Pipeline->drawScene(commandBuffer); // This line should work
+    m_Pipeline->drawScene(commandBuffer); 
 
     vkEndCommandBuffer(commandBuffer);
 }
@@ -254,7 +264,27 @@ void VulkanBase::createGraphicsPipeline() {
 }
 
 void VulkanBase::createFrameBuffers() {
-    // Implementation for creating frame buffers
+
+    swapChainFramebuffers.resize(swapChainImageViews.size());
+    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+        VkImageView attachments[] = {
+            swapChainImageViews[i]
+        };
+
+        VkFramebufferCreateInfo framebufferInfo{};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = renderPass;
+        framebufferInfo.attachmentCount = 1;
+        framebufferInfo.pAttachments = attachments;
+       // framebufferInfo.width = swapChainExtent.width;
+        framebufferInfo.width = swapChainManager->getSwapChainExtent().width;
+        framebufferInfo.height = swapChainManager->getSwapChainExtent().height;
+        framebufferInfo.layers = 1;
+
+        if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create framebuffer!");
+        }
+    }
 }
 
 void VulkanBase::createCommandPool() {

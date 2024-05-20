@@ -3,9 +3,17 @@
 #include "vulkanbase/VulkanUtil.h"
 #include <stdexcept>
 
-void xrxsPipeline::initialize(VkPhysicalDevice physicalDevice,VkDevice device, Shader2D& shader2D) {
-    shader2D.initialize(physicalDevice,device, 10);  // Example count, adjust as needed
-    createGraphicsPipeline(device, shader2D);
+xrxsPipeline::xrxsPipeline()
+{
+}
+
+xrxsPipeline::~xrxsPipeline()
+{
+}
+
+void xrxsPipeline::initialize(VkPhysicalDevice physicalDevice, VkDevice device, VkRenderPass renderPass, Shader2D& shader2D) {
+    shader2D.initialize(physicalDevice, device, 10);  // Example count, adjust as needed
+    createGraphicsPipeline(device, renderPass, shader2D);
 }
 
 void xrxsPipeline::recordCommands(VkCommandBuffer commandBuffer) {
@@ -14,7 +22,7 @@ void xrxsPipeline::recordCommands(VkCommandBuffer commandBuffer) {
     drawScene(commandBuffer);
 }
 
-void xrxsPipeline::createGraphicsPipeline(VkDevice device, Shader2D& shader2D) {
+void xrxsPipeline::createGraphicsPipeline(VkDevice device, VkRenderPass renderPass, Shader2D& shader2D) {
     auto shaderStages = shader2D.getShaderStages();
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
@@ -105,7 +113,7 @@ void xrxsPipeline::createGraphicsPipeline(VkDevice device, Shader2D& shader2D) {
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.layout = m_PipelineLayout;
-    pipelineInfo.renderPass = renderPass;
+    pipelineInfo.renderPass = renderPass;  
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 

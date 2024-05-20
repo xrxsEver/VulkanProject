@@ -1,8 +1,9 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
-#include "VulkanUtil.h"
+#include <vulkan/vulkan.h>
 #include <memory>
+#include "VulkanUtil.h"
 
 class Shader2D;
 class xrxsPipeline;
@@ -80,6 +81,7 @@ private:
     std::unique_ptr<Shader2D> shader2D;
     std::unique_ptr<CommandPool> m_CommandPool;
     std::unique_ptr<xrxsPipeline> m_Pipeline;
+
     std::unique_ptr<DAEMesh> m_Mesh;
     CommandBuffer* m_CommandBuffer;
 
