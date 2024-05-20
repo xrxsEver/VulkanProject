@@ -60,7 +60,7 @@ namespace VkUtils {
 
 			VkBool32 presentSupport = false;
 			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-			// std::cout << "Queue Family " << i << " Present Support: " << (presentSupport ? "Supported" : "Not Supported") << std::endl;
+			std::cout << "Queue Family " << i << " Present Support: " << (presentSupport ? "Supported" : "Not Supported") << std::endl;
 
 			if (presentSupport) {
 				indices.presentFamily = i;
