@@ -1,15 +1,22 @@
+
+#define VK_USE_PLATFORM_WIN32_KHR
+#define GLFW_INCLUDE_VULKAN
+#define GLFW_EXPOSE_NATIVE_WIN32
+
 #include "VulkanBase.h"
 #include "SwapChainManager.h"
 #include "Command/CommandBuffer.h"
 #include "Command/CommandPool.h"
 #include "Shader2D.h"
-#include "xrxsPipeline.h"  // Include xrxsPipeline here
-#include "DAEMesh.h"       // Include DAEMesh here
+#include "xrxsPipeline.h" 
+#include "DAEMesh.h"
 #include <iostream>
 #include <stdexcept>
 #include <functional>
 #include <set>
 #include "vulkanbase/VulkanUtil.h"
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 
 VulkanBase::VulkanBase() {
     initWindow();
@@ -221,9 +228,15 @@ void VulkanBase::setupDebugMessenger() {
 }
 
 void VulkanBase::createSurface() {
-    // Implementation to create a surface
-}
+    VkWin32SurfaceCreateInfoKHR createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    createInfo.hwnd = glfwGetWin32Window(window);
+    createInfo.hinstance = GetModuleHandle(nullptr);
 
+    if (vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create window surface!");
+    }
+}
 void VulkanBase::pickPhysicalDevice() {
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
