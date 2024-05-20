@@ -92,6 +92,8 @@ template<class UBO>
 void DAEDescriptorPool<UBO>::createUBOs(const VkUtils::VulkanContext& context)
 {
     m_UBOs.resize(m_Count);
-    for (size_t i = 0; i < m_Count; i
-
+    for (size_t i = 0; i < m_Count; i++) {
+        // Add code to initialize each UBO if necessary
+        m_UBOs[i] = std::make_unique<DAEUniformBufferObject<UBO>>(context.device, sizeof(UBO));
+    }
 }
