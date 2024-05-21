@@ -3,22 +3,19 @@
 #include <vulkan/vulkan.h>
 #include <memory>
 #include "VulkanUtil.h"
+#include "Vertex.h" 
 
 class Shader2D;
 class xrxsPipeline;
 class DAEMesh;
 class CommandPool;
-class CommandBuffer;
 class SwapChainManager;
-
-
 
 extern const std::vector<const char*> validationLayers;
 extern std::vector<const char*> deviceExtensions;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-// VulkanBase class with necessary Vulkan objects and methods
 class VulkanBase {
 public:
     VulkanBase();
@@ -46,6 +43,7 @@ private:
     void drawScene();
 
     void initializeUBO();
+    void createVertexBuffer();
 
     GLFWwindow* window;
     VkInstance instance;
@@ -77,16 +75,15 @@ private:
 
     VkDebugUtilsMessengerEXT debugMessenger;
     std::unique_ptr<Shader2D> shader2D;
-    std::unique_ptr<CommandPool> m_CommandPool;
     std::unique_ptr<xrxsPipeline> m_Pipeline;
-
     std::unique_ptr<DAEMesh> m_Mesh;
-    CommandBuffer* m_CommandBuffer;
 
-    void createVertexBuffer();
-    void createIndexBuffer();
+    VkBuffer vertexBuffer;
+    VkDeviceMemory vertexBufferMemory;
+
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
     std::vector<const char*> getRequiredExtensions();
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-};
+
+  };

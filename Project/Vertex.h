@@ -5,38 +5,34 @@
 #include <array>
 
 struct Vertex {
-    glm::vec2 pos;   // Position vector
-    glm::vec3 color; // Color vector
+    glm::vec2 pos;
+    glm::vec3 color;
 
-    // Static method to get the binding description for vertex inputs
     static VkVertexInputBindingDescription getBindingDescription() {
         VkVertexInputBindingDescription bindingDescription{};
-        bindingDescription.binding = 0; // Index of the binding in the array of bindings
-        bindingDescription.stride = sizeof(Vertex); // Distance between elements within the buffer
-        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX; // Move to the next data entry after each vertex
-
+        bindingDescription.binding = 0;
+        bindingDescription.stride = sizeof(Vertex);
+        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         return bindingDescription;
     }
 
-    // Static method to get attribute descriptions for vertex inputs
     static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
         std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
 
-        // Position attribute
-        attributeDescriptions[0].binding = 0; // Which binding the data is taken from
-        attributeDescriptions[0].location = 0; // Location in the shader where data will be read
-        attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT; // Format the shader will read
-        attributeDescriptions[0].offset = offsetof(Vertex, pos); // Offset within the structure
+        attributeDescriptions[0].binding = 0;
+        attributeDescriptions[0].location = 0;
+        attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+        attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
-        // Color attribute
-        attributeDescriptions[1].binding = 0; // Which binding the data is taken from
-        attributeDescriptions[1].location = 1; // Location in the shader where data will be read
-        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT; // Format the shader will read
-        attributeDescriptions[1].offset = offsetof(Vertex, color); // Offset within the structure
+        attributeDescriptions[1].binding = 0;
+        attributeDescriptions[1].location = 1;
+        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attributeDescriptions[1].offset = offsetof(Vertex, color);
 
         return attributeDescriptions;
     }
 };
+
 
 struct VertexUBO {
     glm::mat4 model;

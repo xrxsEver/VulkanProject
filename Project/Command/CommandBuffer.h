@@ -4,23 +4,25 @@
 class CommandBuffer {
 public:
     // Constructor
-    CommandBuffer() = default;
+    CommandBuffer();
+
+    // Destructor
+    ~CommandBuffer();
 
     // Setter and Getter for VkCommandBuffer
-    void setVkCommandBuffer(VkCommandBuffer buffer) {
-        m_CommandBuffer = buffer;
-    }
-
-    VkCommandBuffer getVkCommandBuffer() const {
-        return m_CommandBuffer;
-    }
+    void setVkCommandBuffer(VkCommandBuffer buffer);
+    VkCommandBuffer getVkCommandBuffer() const;
 
     // Methods for command buffer operations
     void reset();
     void beginRecording();
     void endRecording();
-    void submit(VkSubmitInfo& info);
+    void submit(VkSubmitInfo& submitInfo, VkQueue graphicsQueue, VkFence fence = VK_NULL_HANDLE);
 
 private:
+    VkDevice m_Device;
+    VkCommandPool m_CommandPool;
     VkCommandBuffer m_CommandBuffer;
+
+    void allocateCommandBuffer();
 };
