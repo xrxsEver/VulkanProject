@@ -61,6 +61,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw)
 
 # Set shader paths
 target_compile_definitions(${PROJECT_NAME} PRIVATE 
-    VERT_SHADER_PATH="${CMAKE_SOURCE_DIR}/Project/shaders/shader.vert"
-    FRAG_SHADER_PATH="${CMAKE_SOURCE_DIR}/Project/shaders/shader.frag"
+    VERT_SHADER_PATH="${CMAKE_SOURCE_DIR}/Project/Shaders/shader.vert.spv"
+    FRAG_SHADER_PATH="${CMAKE_SOURCE_DIR}/Project/Shaders/shader.frag.spv"
 )
