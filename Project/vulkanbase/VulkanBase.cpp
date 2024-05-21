@@ -70,10 +70,17 @@ void VulkanBase::initVulkan() {
     createCommandBuffers();
     createSyncObjects();
 
+
+    shader2D = std::make_unique<Shader2D>(VERT_SHADER_PATH, FRAG_SHADER_PATH);
+
+    //shader2D = std::make_unique<Shader2D>("shaders/objshader.vert", "shaders/objshader.frag");
+
     // Initialize pipeline
     m_Pipeline = std::make_unique<xrxsPipeline>();
     
     m_Pipeline->initialize(physicalDevice, device, renderPass, *shader2D);
+
+
 
 }
 

@@ -4,15 +4,17 @@
 #include <stdexcept>
 
 xrxsPipeline::xrxsPipeline()
-{
-}
+    : m_Pipeline(VK_NULL_HANDLE), m_PipelineLayout(VK_NULL_HANDLE) {}
+
 
 xrxsPipeline::~xrxsPipeline()
 {
 }
 
 void xrxsPipeline::initialize(VkPhysicalDevice physicalDevice, VkDevice device, VkRenderPass renderPass, Shader2D& shader2D) {
+    // Initialize shader2D if not already initialized
     shader2D.initialize(physicalDevice, device, 10);  // Example count, adjust as needed
+
     createGraphicsPipeline(device, renderPass, shader2D);
 }
 

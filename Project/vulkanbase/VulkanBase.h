@@ -18,6 +18,7 @@ extern std::vector<const char*> deviceExtensions;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
+// VulkanBase class with necessary Vulkan objects and methods
 class VulkanBase {
 public:
     VulkanBase();
@@ -29,7 +30,6 @@ private:
     void initVulkan();
     void mainLoop();
     void cleanup();
-
     void createInstance();
     void initializeShaders();
     void setupDebugMessenger();

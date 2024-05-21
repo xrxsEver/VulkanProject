@@ -30,6 +30,7 @@ private:
 
     void createDescriptorSetLayout(const VkUtils::VulkanContext& context);
     void createUBOs(const VkUtils::VulkanContext& context);
+    void createDescriptorPool(const VkUtils::VulkanContext& context);
 
     VkDescriptorPool m_DescriptorPool;
     std::vector<VkDescriptorSet> m_DescriptorSets;

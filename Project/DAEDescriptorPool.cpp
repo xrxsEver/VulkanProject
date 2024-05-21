@@ -1,6 +1,8 @@
 #include "DAEDescriptorPool.h"
 #include "DAEUniformBufferObject.h"
 #include <stdexcept>
+#include <string>
+#include <stdexcept>
 
 template <class UBO>
 DAEDescriptorPool<UBO>::DAEDescriptorPool(VkDevice device, size_t count)
@@ -19,7 +21,28 @@ template <class UBO>
 void DAEDescriptorPool<UBO>::initialize(const VkUtils::VulkanContext& context) {
     createDescriptorSetLayout(context);
     createUBOs(context);
+    createDescriptorPool(context);  // Add this method if not already present
+
 }
+
+template <class UBO>
+void DAEDescriptorPool<UBO>::createDescriptorPool(const VkUtils::VulkanContext& context) {
+    std::array<VkDescriptorPoolSize, 1> poolSizes{};
+    poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSizes[0].descriptorCount = static_cast<uint32_t>(m_Count);
+
+    VkDescriptorPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+    poolInfo.pPoolSizes = poolSizes.data();
+    poolInfo.maxSets = static_cast<uint32_t>(m_Count);
+
+    VkResult result = vkCreateDescriptorPool(m_Device, &poolInfo, nullptr, &m_DescriptorPool);
+    if (result != VK_SUCCESS) {
+        throw std::runtime_error("Failed to create descriptor pool: " + std::to_string(result));
+    }
+}
+
 
 template <class UBO>
 void DAEDescriptorPool<UBO>::setUBO(UBO data, size_t index) {
@@ -29,6 +52,7 @@ void DAEDescriptorPool<UBO>::setUBO(UBO data, size_t index) {
     m_UBOs[index]->update(data); // Ensure DAEUniformBufferObject<UBO> has update method
 }
 
+// Function to create descriptor sets
 template <class UBO>
 void DAEDescriptorPool<UBO>::createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout, std::initializer_list<VkBuffer> buffers) {
     std::vector<VkDescriptorSetLayout> layouts(m_Count, descriptorSetLayout);
@@ -45,7 +69,7 @@ void DAEDescriptorPool<UBO>::createDescriptorSets(VkDescriptorSetLayout descript
 
     for (size_t i = 0; i < m_Count; i++) {
         VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = buffers.begin()[i]; 
+        bufferInfo.buffer = buffers.begin()[i];
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UBO);
 
@@ -61,6 +85,7 @@ void DAEDescriptorPool<UBO>::createDescriptorSets(VkDescriptorSetLayout descript
         vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
     }
 }
+
 
 template <class UBO>
 void DAEDescriptorPool<UBO>::bindDescriptorSet(VkCommandBuffer buffer, VkPipelineLayout layout, size_t index) {
