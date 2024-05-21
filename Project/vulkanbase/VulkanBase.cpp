@@ -57,8 +57,10 @@ void VulkanBase::initVulkan() {
 
     // Initialize swapChainManager as a unique_ptr
     swapChainManager = std::make_unique<SwapChainManager>(device, physicalDevice, surface, window);
-    swapChainManager->createSwapChain();
-    swapChainManager->createImageViews();
+
+    //This two are done in constructor
+   // swapChainManager->createSwapChain();
+   // swapChainManager->createImageViews();
   
 
     createRenderPass();

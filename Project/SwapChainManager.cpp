@@ -33,7 +33,6 @@ void SwapChainManager::createSwapChain() {
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     createInfo.surface = m_surface;
-
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -59,21 +58,43 @@ void SwapChainManager::createSwapChain() {
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    if (vkCreateSwapchainKHR(m_device, &createInfo, nullptr, &m_swapChain) != VK_SUCCESS) {
+    std::cout << "Creating swapchain with the following parameters:\n";
+    std::cout << "Image Count: " << imageCount << "\n";
+    std::cout << "Image Format: " << surfaceFormat.format << "\n";
+    std::cout << "Image Color Space: " << surfaceFormat.colorSpace << "\n";
+    std::cout << "Image Extent: (" << extent.width << ", " << extent.height << ")\n";
+    std::cout << "Image Sharing Mode: " << createInfo.imageSharingMode << "\n";
+    std::cout << "Pre Transform: " << createInfo.preTransform << "\n";
+    std::cout << "Composite Alpha: " << createInfo.compositeAlpha << "\n";
+    std::cout << "Present Mode: " << presentMode << "\n";
+
+    VkResult result = vkCreateSwapchainKHR(m_device, &createInfo, nullptr, &m_swapChain);
+    if (result != VK_SUCCESS) {
+        std::cerr << "vkCreateSwapchainKHR failed with error: " << result << std::endl;
         throw std::runtime_error("failed to create swap chain!");
     }
 
-    vkGetSwapchainImagesKHR(m_device, m_swapChain, &imageCount, nullptr);
-    std::cout << "Image count: " << imageCount << std::endl; // Debugging
+    result = vkGetSwapchainImagesKHR(m_device, m_swapChain, &imageCount, nullptr);
+    if (result != VK_SUCCESS) {
+        std::cerr << "First vkGetSwapchainImagesKHR failed with error: " << result << std::endl;
+        throw std::runtime_error("failed to get swap chain images count!");
+    }
+
+    std::cout << "Image count: " << imageCount << std::endl;
 
     m_swapChainImages.resize(imageCount);
-    if (vkGetSwapchainImagesKHR(m_device, m_swapChain, &imageCount, m_swapChainImages.data()) != VK_SUCCESS) {
+    result = vkGetSwapchainImagesKHR(m_device, m_swapChain, &imageCount, m_swapChainImages.data());
+    if (result != VK_SUCCESS) {
+        std::cerr << "Second vkGetSwapchainImagesKHR failed with error: " << result << std::endl;
         throw std::runtime_error("failed to get swap chain images!");
     }
 
     m_swapChainImageFormat = surfaceFormat.format;
     m_swapChainExtent = extent;
 }
+
+
+
 
 void SwapChainManager::createImageViews() {
     m_swapChainImageViews.resize(m_swapChainImages.size());
@@ -103,45 +124,45 @@ void SwapChainManager::createImageViews() {
 }
 
 
-void SwapChainManager::cleanupSwapChain()
-{
-	// Clean up image views
-	for (auto imageView : m_swapChainImageViews) {
-		vkDestroyImageView(m_device, imageView, nullptr);
-	}
-	m_swapChainImageViews.clear();
+void SwapChainManager::cleanupSwapChain() {
+    for (auto imageView : m_swapChainImageViews) {
+        vkDestroyImageView(m_device, imageView, nullptr);
+    }
+    m_swapChainImageViews.clear();
 
-	// Clean up the swap chain itself
-	if (m_swapChain != VK_NULL_HANDLE) {
-		vkDestroySwapchainKHR(m_device, m_swapChain, nullptr);
-		m_swapChain = VK_NULL_HANDLE;
-	}
+    if (m_swapChain != VK_NULL_HANDLE) {
+        vkDestroySwapchainKHR(m_device, m_swapChain, nullptr);
+        m_swapChain = VK_NULL_HANDLE;
+    }
 }
 
-SwapChainSupportDetails SwapChainManager::querySwapChainSupport(VkPhysicalDevice device)
-{
-	SwapChainSupportDetails details;
 
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_surface, &details.capabilities);
+SwapChainSupportDetails SwapChainManager::querySwapChainSupport(VkPhysicalDevice device) {
+    SwapChainSupportDetails details;
 
-	uint32_t formatCount;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface, &formatCount, nullptr);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_surface, &details.capabilities);
+    std::cout << "Min Image Count: " << details.capabilities.minImageCount << std::endl;
+    std::cout << "Max Image Count: " << details.capabilities.maxImageCount << std::endl;
 
-	if (formatCount != 0) {
-		details.formats.resize(formatCount);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface, &formatCount, details.formats.data());
-	}
+    uint32_t formatCount;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface, &formatCount, nullptr);
+    std::cout << "Format Count: " << formatCount << std::endl;
+    if (formatCount != 0) {
+        details.formats.resize(formatCount);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface, &formatCount, details.formats.data());
+    }
 
-	uint32_t presentModeCount;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentModeCount, nullptr);
+    uint32_t presentModeCount;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentModeCount, nullptr);
+    std::cout << "Present Mode Count: " << presentModeCount << std::endl;
+    if (presentModeCount != 0) {
+        details.presentModes.resize(presentModeCount);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentModeCount, details.presentModes.data());
+    }
 
-	if (presentModeCount != 0) {
-		details.presentModes.resize(presentModeCount);
-		vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentModeCount, details.presentModes.data());
-	}
-
-	return details;
+    return details;
 }
+
 
 VkSurfaceFormatKHR SwapChainManager::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 {
