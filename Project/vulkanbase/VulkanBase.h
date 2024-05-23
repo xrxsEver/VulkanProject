@@ -3,7 +3,6 @@
 #include <vulkan/vulkan.h>
 #include <memory>
 #include "VulkanUtil.h"
-#include "Vertex.h" 
 
 class Shader2D;
 class xrxsPipeline;
@@ -28,21 +27,21 @@ private:
     void mainLoop();
     void cleanup();
     void createInstance();
-    void initializeShaders();
-    void setupDebugMessenger();
+   // void initializeShaders();
+   // void setupDebugMessenger();
     void createSurface();
     void pickPhysicalDevice();
     void createLogicalDevice();
-    void createRenderPass();
-    void createGraphicsPipeline();
-    void createFrameBuffers();
+   // void createRenderPass();
+   // void createGraphicsPipeline();
+  //  void createFrameBuffers();
     void createCommandPool();
     void createCommandBuffers();
-    void createSyncObjects();
+ ///   void createSyncObjects();
     void drawFrame();
-    void drawScene();
+ //  void drawScene();
 
-    void initializeUBO();
+   // void initializeUBO();
     void createVertexBuffer();
 
     GLFWwindow* window;

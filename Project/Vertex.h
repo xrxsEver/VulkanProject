@@ -1,8 +1,10 @@
 #pragma once
-
+#ifndef VERTEX_H
+#define VERTEX_H
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.h>
 #include <array>
+#include <vector>
 
 struct Vertex {
     glm::vec2 pos;
@@ -33,6 +35,12 @@ struct Vertex {
     }
 };
 
+const std::vector<Vertex> vertices = {
+    {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+};
+
 
 struct VertexUBO {
     glm::mat4 model;
@@ -48,3 +56,4 @@ struct ViewProjection {
     glm::mat4 proj;
     glm::mat4 view;
 };
+#endif // VERTEX_H

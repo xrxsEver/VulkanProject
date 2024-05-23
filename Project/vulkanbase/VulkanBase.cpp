@@ -12,19 +12,14 @@
 #include <functional>
 #include <set>
 #include "VulkanUtil.h"
-#include "Vertex.h" 
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 
 VulkanBase::VulkanBase() {
-    vertices = {
-       {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-       {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-       {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
-    };
+
     initWindow();
     initVulkan();
-    initializeUBO();
+ //   initializeUBO();
 }
 
 const std::vector<const char*> validationLayers = {
@@ -53,20 +48,20 @@ void VulkanBase::initWindow() {
 
 void VulkanBase::initVulkan() {
     createInstance();
-    setupDebugMessenger();
-    createSurface();
-    pickPhysicalDevice();
-    createLogicalDevice();
+ //  setupDebugMessenger();
+   createSurface();
+   pickPhysicalDevice();
+   createLogicalDevice();
 
     swapChainManager = std::make_unique<SwapChainManager>(device, physicalDevice, surface, window);
 
-    createRenderPass();
-    createGraphicsPipeline();
-    createFrameBuffers();
+ //   createRenderPass();
+  //  createGraphicsPipeline();
+//    createFrameBuffers();
     createCommandPool();
     createVertexBuffer();
     createCommandBuffers();
-    createSyncObjects();
+  //  createSyncObjects();
 
     shader2D = std::make_unique<Shader2D>(VERT_SHADER_PATH, FRAG_SHADER_PATH);
     m_Pipeline = std::make_unique<xrxsPipeline>();
@@ -188,7 +183,72 @@ void VulkanBase::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInf
     createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     createInfo.pfnUserCallback = debugCallback;
 }
+void VulkanBase::createSurface() {
+    VkWin32SurfaceCreateInfoKHR createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    createInfo.hwnd = glfwGetWin32Window(window);
+    createInfo.hinstance = GetModuleHandle(nullptr);
 
+    if (vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create window surface!");
+    }
+}
+void VulkanBase::pickPhysicalDevice() {
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+    if (deviceCount == 0) {
+        throw std::runtime_error("failed to find GPUs with Vulkan support!");
+    }
+
+    std::vector<VkPhysicalDevice> devices(deviceCount);
+    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+    for (const auto& device : devices) {
+        if (isDeviceSuitable(device)) {
+            physicalDevice = device;
+            break;
+        }
+    }
+
+    if (physicalDevice == VK_NULL_HANDLE) {
+        throw std::runtime_error("failed to find a suitable GPU!");
+    }
+}
+
+void VulkanBase::createLogicalDevice() {
+    VkUtils::QueueFamilyIndices indices = VkUtils::FindQueueFamilies(physicalDevice, surface);
+
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+
+    float queuePriority = 1.0f;
+    for (uint32_t queueFamily : uniqueQueueFamilies) {
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = queueFamily;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+        queueCreateInfos.push_back(queueCreateInfo);
+    }
+
+    VkPhysicalDeviceFeatures deviceFeatures{};
+
+    VkDeviceCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.pQueueCreateInfos = queueCreateInfos.data();
+    createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+    createInfo.pEnabledFeatures = &deviceFeatures;
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+    createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+
+    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create logical device!");
+    }
+
+    vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+}
 void VulkanBase::createCommandPool() {
     VkCommandPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
