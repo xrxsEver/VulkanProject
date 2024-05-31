@@ -12,61 +12,64 @@
 #include <fstream>
 #include <iostream>
 
-namespace VkUtils
-{
+namespace VkUtils {
 
-	const uint32_t WIDTH = 800;
-	const uint32_t HEIGHT = 600;
+    const uint32_t WIDTH = 800;
+    const uint32_t HEIGHT = 600;
 
 #ifdef NDEBUG
-	const bool enableValidationLayers = false;
+    const bool enableValidationLayers = false;
 #else
-	const bool enableValidationLayers = true;
+    const bool enableValidationLayers = true;
 #endif
 
-	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
+    VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
 
-	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+    void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
 
-	std::vector<char> readFile(const std::string& filename);
+    std::vector<char> readFile(const std::string& filename);
 
-	struct VulkanContext {
-		VkDevice device;
-		VkPhysicalDevice physicalDevice;
-		VkRenderPass renderPass;
-		VkExtent2D swapChainExtent;
-	};
+    struct VulkanContext {
+        VkDevice device;
+        VkPhysicalDevice physicalDevice;
+        VkRenderPass renderPass;
+        VkExtent2D swapChainExtent;
+    };
 
+    struct QueueFamilyIndices {
+        std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> presentFamily;
 
-	struct QueueFamilyIndices {
-		std::optional<uint32_t> graphicsFamily;
-		std::optional<uint32_t> presentFamily;
+        bool isComplete() const {
+            return graphicsFamily.has_value() && presentFamily.has_value();
+        }
+    };
 
-		bool isComplete() const
-		{
-			return graphicsFamily.has_value() && presentFamily.has_value();
-		}
-	};
+    struct SwapChainSupportDetails {
+        VkSurfaceCapabilitiesKHR capabilities;
+        std::vector<VkSurfaceFormatKHR> formats;
+        std::vector<VkPresentModeKHR> presentModes;
+    };
 
-	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
+    QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
 
-	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice device=0);
+    SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 
-	std::tuple<VkBuffer, VkDeviceMemory> CreateBuffer(VkDevice device,
-		VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags);
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice physicalDevice);
 
-	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue);
+    std::tuple<VkBuffer, VkDeviceMemory> CreateBuffer(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags);
 
+    void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue);
 
 }
 
 struct VulkanContext {
-	VkInstance instance;
-	VkDevice device;
-	VkPhysicalDevice physicalDevice;
-	VkQueue graphicsQueue;
-	VkSurfaceKHR surface;
+    VkInstance instance;
+    VkDevice device;
+    VkPhysicalDevice physicalDevice;
+    VkQueue graphicsQueue;
+    VkSurfaceKHR surface;
 
-	// Constructor for initialization if required
-	VulkanContext() : instance(nullptr), device(nullptr), physicalDevice(nullptr), graphicsQueue(nullptr), surface(nullptr) {}
+    // Constructor for initialization if required
+    VulkanContext() : instance(nullptr), device(nullptr), physicalDevice(nullptr), graphicsQueue(nullptr), surface(nullptr) {}
 };

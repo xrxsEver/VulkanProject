@@ -2,6 +2,26 @@
 #include "vulkanbase/VulkanUtil.h"
 #include <fstream>
 #include <stdexcept>
+#include <iostream>
+#include <filesystem>
+
+std::vector<char> readFile(const std::string& filename) {
+    std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: " << std::filesystem::absolute(filename) << std::endl;
+        throw std::runtime_error("failed to open file!");
+    }
+
+    size_t fileSize = static_cast<size_t>(file.tellg());
+    std::vector<char> buffer(fileSize);
+
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
+    file.close();
+
+    return buffer;
+}
 
 Shader2D::Shader2D(const std::string& vertexShaderFile, const std::string& fragmentShaderFile)
     : m_VertexShaderFile(vertexShaderFile), m_FragmentShaderFile(fragmentShaderFile),
@@ -11,13 +31,13 @@ void Shader2D::initialize(const VkPhysicalDevice& vkPhysicalDevice, const VkDevi
     m_DescriptorPool = std::make_unique<DAEDescriptorPool<VertexUBO>>(vkDevice, count);
 
     // Ensure the shader files are correctly read
-    auto vertexCode = VkUtils::readFile(m_VertexShaderFile);
+    auto vertexCode = readFile(m_VertexShaderFile);
     if (vertexCode.empty()) {
         throw std::runtime_error("Failed to load vertex shader file!");
     }
     m_VertexShaderModule = createShaderModule(vkDevice, vertexCode);
 
-    auto fragmentCode = VkUtils::readFile(m_FragmentShaderFile);
+    auto fragmentCode = readFile(m_FragmentShaderFile);
     if (fragmentCode.empty()) {
         throw std::runtime_error("Failed to load fragment shader file!");
     }

@@ -17,6 +17,7 @@ public:
     void initialize(VkPhysicalDevice physicalDevice, VkDevice device, VkRenderPass renderPass, Shader2D& shader2D); // Include renderPass
     void recordCommands(VkCommandBuffer commandBuffer);
     void drawScene(VkCommandBuffer commandBuffer);
+    VkPipeline getPipeline() const { return m_Pipeline; }
 
 private:
     void createGraphicsPipeline(VkDevice device, VkRenderPass renderPass, Shader2D& shader2D); // Include renderPass

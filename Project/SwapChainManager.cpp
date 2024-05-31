@@ -17,19 +17,27 @@ SwapChainManager::~SwapChainManager() {
 	cleanupSwapChain();
 }
 
-
 void SwapChainManager::createSwapChain() {
+    // Clean up old swapchain if it exists
+    if (m_swapChain != VK_NULL_HANDLE) {
+        cleanupSwapChain();
+    }
+
+    // Query swap chain support details
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(m_physicalDevice);
 
+    // Choose surface format, present mode, and extent
     VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
     VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
+    // Determine the number of images in the swap chain
     uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
     if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
         imageCount = swapChainSupport.capabilities.maxImageCount;
     }
 
+    // Fill out swap chain creation info structure
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     createInfo.surface = m_surface;
@@ -56,8 +64,9 @@ void SwapChainManager::createSwapChain() {
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
-    createInfo.oldSwapchain = VK_NULL_HANDLE;
+    createInfo.oldSwapchain = VK_NULL_HANDLE; // If there was an old swapchain, set it here
 
+    // Print debug information
     std::cout << "Creating swapchain with the following parameters:\n";
     std::cout << "Image Count: " << imageCount << "\n";
     std::cout << "Image Format: " << surfaceFormat.format << "\n";
@@ -68,19 +77,24 @@ void SwapChainManager::createSwapChain() {
     std::cout << "Composite Alpha: " << createInfo.compositeAlpha << "\n";
     std::cout << "Present Mode: " << presentMode << "\n";
 
+    // Create the swap chain
     VkResult result = vkCreateSwapchainKHR(m_device, &createInfo, nullptr, &m_swapChain);
     if (result != VK_SUCCESS) {
         std::cerr << "vkCreateSwapchainKHR failed with error: " << result << std::endl;
         throw std::runtime_error("failed to create swap chain!");
     }
 
+    // Ensure the swapchain handle is valid
+    if (m_swapChain == VK_NULL_HANDLE) {
+        throw std::runtime_error("Swapchain handle is VK_NULL_HANDLE after creation!");
+    }
+
+    // Retrieve the swap chain images
     result = vkGetSwapchainImagesKHR(m_device, m_swapChain, &imageCount, nullptr);
     if (result != VK_SUCCESS) {
         std::cerr << "First vkGetSwapchainImagesKHR failed with error: " << result << std::endl;
         throw std::runtime_error("failed to get swap chain images count!");
     }
-
-    std::cout << "Image count: " << imageCount << std::endl;
 
     m_swapChainImages.resize(imageCount);
     result = vkGetSwapchainImagesKHR(m_device, m_swapChain, &imageCount, m_swapChainImages.data());
@@ -92,7 +106,6 @@ void SwapChainManager::createSwapChain() {
     m_swapChainImageFormat = surfaceFormat.format;
     m_swapChainExtent = extent;
 }
-
 
 
 
@@ -141,27 +154,37 @@ SwapChainSupportDetails SwapChainManager::querySwapChainSupport(VkPhysicalDevice
     SwapChainSupportDetails details;
 
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_surface, &details.capabilities);
-    std::cout << "Min Image Count: " << details.capabilities.minImageCount << std::endl;
-    std::cout << "Max Image Count: " << details.capabilities.maxImageCount << std::endl;
+    std::cout << "Capabilities: \n";
+    std::cout << "  minImageCount: " << details.capabilities.minImageCount << "\n";
+    std::cout << "  maxImageCount: " << details.capabilities.maxImageCount << "\n";
+    std::cout << "  currentExtent: (" << details.capabilities.currentExtent.width << ", " << details.capabilities.currentExtent.height << ")\n";
 
     uint32_t formatCount;
     vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface, &formatCount, nullptr);
-    std::cout << "Format Count: " << formatCount << std::endl;
+    std::cout << "Formats: \n";
     if (formatCount != 0) {
         details.formats.resize(formatCount);
         vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface, &formatCount, details.formats.data());
+        for (const auto& format : details.formats) {
+            std::cout << "  format: " << format.format << ", colorSpace: " << format.colorSpace << "\n";
+        }
     }
 
     uint32_t presentModeCount;
     vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentModeCount, nullptr);
-    std::cout << "Present Mode Count: " << presentModeCount << std::endl;
+    std::cout << "Present Modes: \n";
     if (presentModeCount != 0) {
         details.presentModes.resize(presentModeCount);
         vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentModeCount, details.presentModes.data());
+        for (const auto& presentMode : details.presentModes) {
+            std::cout << "  presentMode: " << presentMode << "\n";
+        }
     }
 
     return details;
 }
+
+
 
 
 VkSurfaceFormatKHR SwapChainManager::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)

@@ -13,7 +13,9 @@ xrxsPipeline::~xrxsPipeline()
 
 void xrxsPipeline::initialize(VkPhysicalDevice physicalDevice, VkDevice device, VkRenderPass renderPass, Shader2D& shader2D) {
     // Initialize shader2D if not already initialized
-    shader2D.initialize(physicalDevice, device, 10);  // Example count, adjust as needed
+    std::cout << "Initializing pipeline with shaders" << std::endl;
+
+    shader2D.initialize(physicalDevice, device, 2);  // Example count, adjust as needed
 
     createGraphicsPipeline(device, renderPass, shader2D);
 }

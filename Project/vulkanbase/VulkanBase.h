@@ -28,19 +28,19 @@ private:
     void cleanup();
     void createInstance();
    // void initializeShaders();
-   // void setupDebugMessenger();
+    void setupDebugMessenger();
     void createSurface();
     void pickPhysicalDevice();
     void createLogicalDevice();
-   // void createRenderPass();
-   // void createGraphicsPipeline();
-  //  void createFrameBuffers();
+    void createRenderPass();
+    void createGraphicsPipeline();
+    void createFrameBuffers();
     void createCommandPool();
     void createCommandBuffers();
- ///   void createSyncObjects();
+    void createSyncObjects();
     void drawFrame();
  //  void drawScene();
-
+    void recreateSwapChain();
    // void initializeUBO();
     void createVertexBuffer();
 
@@ -84,5 +84,6 @@ private:
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
     std::vector<const char*> getRequiredExtensions();
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+    static const std::vector<const char*> deviceExtensions; // Declare as static
 
   };

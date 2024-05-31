@@ -15,7 +15,6 @@ FetchContent_Declare(
   GIT_TAG        3.3.8 # Specify the version you need
 )
 
-
 FetchContent_MakeAvailable(glfw)
 
 # Find the required packages
@@ -24,6 +23,7 @@ find_package(Vulkan REQUIRED)
 # Include Directories
 include_directories(${Vulkan_INCLUDE_DIRS})
 
+# Add subdirectory
 add_subdirectory(Project)
 
 # If using validation layers, copy the required JSON files (optional)
