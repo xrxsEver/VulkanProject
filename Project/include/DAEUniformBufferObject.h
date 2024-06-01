@@ -1,13 +1,15 @@
 #pragma once
 
-#include "vulkanbase/VulkanUtil.h"
+#include "VulkanUtil.h"
 #include "DAEDataBuffer.h"
 #include "Vertex.h"
-class DAEDataBuffer;
 
 template <class UBO>
 class DAEUniformBufferObject {
 public:
+    DAEUniformBufferObject(VkPhysicalDevice physicalDevice, VkDevice device, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkDeviceSize size)
+        : m_UBOBuffer(std::make_unique<DAEDataBuffer>(physicalDevice, device, usage, properties, size)), m_UBOSrc{} {}
+
     void initialize(const VulkanContext& context);
     void upload();
     void setData(UBO ubo) {
@@ -22,9 +24,6 @@ public:
         return m_UBOBuffer->getVkBuffer();
     }
 
-    DAEUniformBufferObject(VkPhysicalDevice physicalDevice, VkDevice device, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkDeviceSize size)
-        : m_UBOBuffer(std::make_unique<DAEDataBuffer>(physicalDevice, device, usage, properties, size)) {}
-
     DAEDataBuffer* operator->() {
         return m_UBOBuffer.get();
     }
@@ -33,7 +32,6 @@ private:
     std::unique_ptr<DAEDataBuffer> m_UBOBuffer;
     UBO m_UBOSrc;
 };
-
 
 template <class UBO>
 void DAEUniformBufferObject<UBO>::initialize(const VulkanContext& context) {
@@ -55,8 +53,7 @@ void DAEUniformBufferObject<UBO>::initialize(const VulkanContext& context) {
 template <class UBO>
 void DAEUniformBufferObject<UBO>::upload() {
     void* data;
-    VkDeviceSize bufferSize = sizeof(UBO);
-    vkMapMemory(m_UBOBuffer->getDevice(), m_UBOBuffer->getMemory(), 0, bufferSize, 0, &data);
+    vkMapMemory(m_UBOBuffer->getDevice(), m_UBOBuffer->getMemory(), 0, sizeof(UBO), 0, &data);
     memcpy(data, &m_UBOSrc, sizeof(UBO));
     vkUnmapMemory(m_UBOBuffer->getDevice(), m_UBOBuffer->getMemory());
 }

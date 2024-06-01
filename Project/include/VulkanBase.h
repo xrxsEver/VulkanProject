@@ -1,17 +1,24 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <GLFW/glfw3.h>
+#include <vector>
 #include <memory>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include "DAEDescriptorPool.h"
+#include "DAEUniformBufferObject.h"
+#include "Vertex.h"
 #include "VulkanUtil.h"
+#include "command/CommandBuffer.h"
+#include "command/CommandPool.h"
+#include <algorithm>
 
+// Forward declarations
+class SwapChainManager;
+class DAEMesh;
 class Shader2D;
 class xrxsPipeline;
-class DAEMesh;
-class CommandPool;
-class SwapChainManager;
-
-extern const std::vector<const char*> validationLayers;
-extern std::vector<const char*> deviceExtensions;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -27,7 +34,6 @@ private:
     void mainLoop();
     void cleanup();
     void createInstance();
-   // void initializeShaders();
     void setupDebugMessenger();
     void createSurface();
     void pickPhysicalDevice();
@@ -36,13 +42,24 @@ private:
     void createGraphicsPipeline();
     void createFrameBuffers();
     void createCommandPool();
+    void createVertexBuffer();
+    void createIndexBuffer();
+    void createUniformBuffers();
+    void createDescriptorSetLayout();
+    void createDescriptorPool();
+    void createDescriptorSets();
     void createCommandBuffers();
     void createSyncObjects();
     void drawFrame();
- //  void drawScene();
     void recreateSwapChain();
-   // void initializeUBO();
-    void createVertexBuffer();
+    void updateUniformBuffer(uint32_t currentImage);
+
+    void keyEvent(int key, int scancode, int action, int mods);
+    void mouseMove(GLFWwindow* window, double xpos, double ypos);
+    void mouseEvent(GLFWwindow* window, int button, int action, int mods);
+    void beginRenderPass(const CommandBuffer& buffer, VkFramebuffer currentBuffer, VkExtent2D extent);
+    void endRenderPass(const CommandBuffer& buffer);
+    void recordCommandBuffer(CommandBuffer& commandBuffer, uint32_t imageIndex);
 
     GLFWwindow* window;
     VkInstance instance;
@@ -61,12 +78,33 @@ private:
     VkDescriptorSetLayout descriptorSetLayout;
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
-    VkCommandPool commandPool;
-    std::vector<VkCommandBuffer> commandBuffers;
+    CommandPool commandPool;
+    std::vector<CommandBuffer> commandBuffers;
+
+    size_t currentFrame = 0;
+
     std::vector<VkSemaphore> imageAvailableSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
-    size_t currentFrame = 0;
+
+    std::unique_ptr<DAEDescriptorPool<VertexUBO>> descriptorPool;
+
+    std::vector<VkBuffer> uniformBuffers;
+    std::vector<VkDeviceMemory> uniformBuffersMemory;
+    std::vector<VkDescriptorSet> descriptorSets;
+
+    std::vector<Vertex> vertices = {
+      {{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+      {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+      {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}
+    };
+
+    std::vector<uint32_t> indices = { 0, 1, 2, 2, 3, 0 }; // Example indices for a rectangle
+
+
+    glm::vec2 m_DragStart;
+    float m_Radius = 10.0f;
+    float m_Rotation = 0.0f;
 
     bool framebufferResized = false;
     bool isDeviceSuitable(VkPhysicalDevice device);
@@ -79,11 +117,16 @@ private:
 
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
+    VkBuffer indexBuffer;
+    VkDeviceMemory indexBufferMemory;
+
+    VkCommandBuffer beginSingleTimeCommands();
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+    void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
     std::vector<const char*> getRequiredExtensions();
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-    static const std::vector<const char*> deviceExtensions; // Declare as static
-
-  };
+    static const std::vector<const char*> deviceExtensions;
+};

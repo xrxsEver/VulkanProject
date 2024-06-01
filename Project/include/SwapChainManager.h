@@ -2,8 +2,8 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
-#include "vulkanbase/VulkanBase.h"
-#include "vulkanbase/VulkanUtil.h"
+#include "VulkanBase.h"
+#include "VulkanUtil.h"
 
 struct SwapChainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;

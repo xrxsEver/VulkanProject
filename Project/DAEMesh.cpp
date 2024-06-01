@@ -40,15 +40,14 @@ void DAEMesh::destroyMesh(VkDevice device) {
     }
 }
 
-// Add a vertex to the mesh
 void DAEMesh::addVertex(glm::vec2 pos, glm::vec3 color) {
-    Vertex vertex;
-    vertex.pos = pos;
+    Vertex vertex = {};
+    vertex.pos = glm::vec3(pos, 0.0f); // Convert vec2 to vec3 by adding z=0.0f
     vertex.color = color;
     m_Vertices.push_back(vertex);
 }
 
-// Add a triangle to the mesh
+
 void DAEMesh::addTriangle(uint16_t i1, uint16_t i2, uint16_t i3, uint16_t offset) {
     m_Indices.push_back(i1 + offset);
     m_Indices.push_back(i2 + offset);

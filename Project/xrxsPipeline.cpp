@@ -1,69 +1,98 @@
-#pragma once
 #include "xrxsPipeline.h"
-#include "vulkanbase/VulkanUtil.h"
+#include "VulkanUtil.h"
+#include "Vertex.h"
 #include <stdexcept>
 
-xrxsPipeline::xrxsPipeline()
-    : m_Pipeline(VK_NULL_HANDLE), m_PipelineLayout(VK_NULL_HANDLE) {}
+xrxsPipeline::xrxsPipeline() : graphicsPipeline(VK_NULL_HANDLE), pipelineLayout(VK_NULL_HANDLE) {
+}
 
-
-xrxsPipeline::~xrxsPipeline()
-{
+xrxsPipeline::~xrxsPipeline() {
+    // Destruction should be handled outside of this class, typically in the VulkanBase cleanup method
 }
 
 void xrxsPipeline::initialize(VkPhysicalDevice physicalDevice, VkDevice device, VkRenderPass renderPass, Shader2D& shader2D) {
-    // Initialize shader2D if not already initialized
-    std::cout << "Initializing pipeline with shaders" << std::endl;
+    auto vertShaderStageInfo = createShaderStageInfo(shader2D.getVertShaderModule(), VK_SHADER_STAGE_VERTEX_BIT);
+    auto fragShaderStageInfo = createShaderStageInfo(shader2D.getFragShaderModule(), VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    shader2D.initialize(physicalDevice, device, 2);  // Example count, adjust as needed
+    VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-    createGraphicsPipeline(device, renderPass, shader2D);
+    auto vertexInputInfo = createVertexInputStateInfo();
+    auto inputAssembly = createInputAssemblyStateInfo();
+    auto viewportState = createViewportStateInfo();
+    auto rasterizer = createRasterizationStateInfo();
+    auto multisampling = createMultisampleStateInfo();
+    auto colorBlending = createColorBlendStateInfo();
+    auto dynamicState = createDynamicStateInfo();
+    auto pushConstantRange = createPushConstantRange();
+
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+
+    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create pipeline layout!");
+    }
+
+    VkGraphicsPipelineCreateInfo pipelineInfo{};
+    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineInfo.stageCount = 2;
+    pipelineInfo.pStages = shaderStages;
+    pipelineInfo.pVertexInputState = &vertexInputInfo;
+    pipelineInfo.pInputAssemblyState = &inputAssembly;
+    pipelineInfo.pViewportState = &viewportState;
+    pipelineInfo.pRasterizationState = &rasterizer;
+    pipelineInfo.pMultisampleState = &multisampling;
+    pipelineInfo.pColorBlendState = &colorBlending;
+    pipelineInfo.layout = pipelineLayout;
+    pipelineInfo.renderPass = renderPass;
+    pipelineInfo.subpass = 0;
+    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create graphics pipeline!");
+    }
 }
 
-void xrxsPipeline::recordCommands(VkCommandBuffer commandBuffer) {
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-    // Bind descriptor sets and other necessary resources here
-    drawScene(commandBuffer);
+VkPipelineShaderStageCreateInfo xrxsPipeline::createShaderStageInfo(VkShaderModule shaderModule, VkShaderStageFlagBits stage) {
+    VkPipelineShaderStageCreateInfo shaderStageInfo{};
+    shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shaderStageInfo.stage = stage;
+    shaderStageInfo.module = shaderModule;
+    shaderStageInfo.pName = "main";
+    return shaderStageInfo;
 }
 
-void xrxsPipeline::createGraphicsPipeline(VkDevice device, VkRenderPass renderPass, Shader2D& shader2D) {
-    auto shaderStages = shader2D.getShaderStages();
-
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
+VkPipelineVertexInputStateCreateInfo xrxsPipeline::createVertexInputStateInfo() {
     auto bindingDescription = Vertex::getBindingDescription();
     auto attributeDescriptions = Vertex::getAttributeDescriptions();
 
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = 1;
-    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
     vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
     vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+    return vertexInputInfo;
+}
 
+VkPipelineInputAssemblyStateCreateInfo xrxsPipeline::createInputAssemblyStateInfo() {
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     inputAssembly.primitiveRestartEnable = VK_FALSE;
+    return inputAssembly;
+}
 
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = 800.0f;
-    viewport.height = 600.0f;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    VkRect2D scissor{};
-    scissor.offset = { 0, 0 };
-    scissor.extent = { 800, 600 };
-
+VkPipelineViewportStateCreateInfo xrxsPipeline::createViewportStateInfo() {
     VkPipelineViewportStateCreateInfo viewportState{};
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     viewportState.viewportCount = 1;
-    viewportState.pViewports = &viewport;
     viewportState.scissorCount = 1;
-    viewportState.pScissors = &scissor;
+    return viewportState;
+}
 
+VkPipelineRasterizationStateCreateInfo xrxsPipeline::createRasterizationStateInfo() {
     VkPipelineRasterizationStateCreateInfo rasterizer{};
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
@@ -73,57 +102,41 @@ void xrxsPipeline::createGraphicsPipeline(VkDevice device, VkRenderPass renderPa
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
+    return rasterizer;
+}
 
+VkPipelineMultisampleStateCreateInfo xrxsPipeline::createMultisampleStateInfo() {
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisampling.sampleShadingEnable = VK_FALSE;
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    return multisampling;
+}
 
+VkPipelineColorBlendStateCreateInfo xrxsPipeline::createColorBlendStateInfo() {
     VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-        VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     colorBlendAttachment.blendEnable = VK_FALSE;
 
     VkPipelineColorBlendStateCreateInfo colorBlending{};
     colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     colorBlending.logicOpEnable = VK_FALSE;
-    colorBlending.logicOp = VK_LOGIC_OP_COPY;
     colorBlending.attachmentCount = 1;
     colorBlending.pAttachments = &colorBlendAttachment;
-    colorBlending.blendConstants[0] = 0.0f;
-    colorBlending.blendConstants[1] = 0.0f;
-    colorBlending.blendConstants[2] = 0.0f;
-    colorBlending.blendConstants[3] = 0.0f;
+    return colorBlending;
+}
 
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+VkPipelineDynamicStateCreateInfo xrxsPipeline::createDynamicStateInfo() {
+    std::vector<VkDynamicState> dynamicStates = {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR
+    };
 
-    VkPushConstantRange pushConstantRange = createPushConstantRange();
-    pipelineLayoutInfo.pushConstantRangeCount = 1;
-    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
-
-    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create pipeline layout!");
-    }
-
-    VkGraphicsPipelineCreateInfo pipelineInfo{};
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
-    pipelineInfo.pStages = shaderStages.data();
-    pipelineInfo.pVertexInputState = &vertexInputInfo;
-    pipelineInfo.pInputAssemblyState = &inputAssembly;
-    pipelineInfo.pViewportState = &viewportState;
-    pipelineInfo.pRasterizationState = &rasterizer;
-    pipelineInfo.pMultisampleState = &multisampling;
-    pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.layout = m_PipelineLayout;
-    pipelineInfo.renderPass = renderPass;  
-    pipelineInfo.subpass = 0;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-
-    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_Pipeline) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create graphics pipeline!");
-    }
+    VkPipelineDynamicStateCreateInfo dynamicState{};
+    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+    dynamicState.pDynamicStates = dynamicStates.data();
+    return dynamicState;
 }
 
 VkPushConstantRange xrxsPipeline::createPushConstantRange() {
@@ -133,10 +146,4 @@ VkPushConstantRange xrxsPipeline::createPushConstantRange() {
     pushConstantRange.size = sizeof(MeshData);
 
     return pushConstantRange;
-}
-
-void xrxsPipeline::drawScene(VkCommandBuffer commandBuffer) {
-    // Code to issue the draw calls
-    // This will loop through the meshes and bind vertex buffers, index buffers,
-    // and issue draw calls for each
 }

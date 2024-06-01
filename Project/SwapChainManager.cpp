@@ -1,6 +1,6 @@
 #include "SwapChainManager.h"
-#include "vulkanbase/VulkanBase.h"
-#include "vulkanbase/VulkanUtil.h"
+#include "VulkanBase.h"
+#include "VulkanUtil.h"
 #include <algorithm> 
 #include <iostream> // For debugging
 

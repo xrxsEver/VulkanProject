@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vulkanbase/VulkanBase.h"
+#include <vulkan/vulkan.h>
 #include <stdexcept>
 
 class DAEDataBuffer {
@@ -25,8 +25,8 @@ public:
     void bindAsIndexBuffer(VkCommandBuffer commandBuffer);
     VkBuffer getVkBuffer();
     VkDeviceSize getSizeInBytes();
-    VkDevice getDevice() const { return m_VkDevice; }  // Add this method
-    VkDeviceMemory getMemory() const { return m_VkBufferMemory; }  // Add this method
+    VkDevice getDevice() const { return m_VkDevice; }
+    VkDeviceMemory getMemory() const { return m_VkBufferMemory; }
 
 private:
     uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);

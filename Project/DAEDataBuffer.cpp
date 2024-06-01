@@ -1,7 +1,5 @@
 #include "DAEDataBuffer.h"
 
-
-
 DAEDataBuffer::DAEDataBuffer(VkPhysicalDevice physicalDevice, VkDevice device, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkDeviceSize size)
     : m_VkDevice(device), m_Size(size) {
     VkBufferCreateInfo bufferInfo{};
@@ -29,27 +27,23 @@ DAEDataBuffer::DAEDataBuffer(VkPhysicalDevice physicalDevice, VkDevice device, V
     vkBindBufferMemory(device, m_VkBuffer, m_VkBufferMemory, 0);
 }
 
-
-void DAEDataBuffer::upload(VkDeviceSize size, void* data)
-{
+void DAEDataBuffer::upload(VkDeviceSize size, void* data) {
     void* destData;
     vkMapMemory(m_VkDevice, m_VkBufferMemory, 0, size, 0, &destData);
     memcpy(destData, data, (size_t)size);
     vkUnmapMemory(m_VkDevice, m_VkBufferMemory);
 }
 
+
 void DAEDataBuffer::update()
 {
 }
 
-void DAEDataBuffer::map(VkDeviceSize size, void* data)
-{
+void DAEDataBuffer::map(VkDeviceSize size, void* data) {
     vkMapMemory(m_VkDevice, m_VkBufferMemory, 0, size, 0, &data);
-
 }
 
-void DAEDataBuffer::destroy()
-{
+void DAEDataBuffer::destroy() {
     if (m_VkBuffer != VK_NULL_HANDLE) {
         vkDestroyBuffer(m_VkDevice, m_VkBuffer, nullptr);
         m_VkBuffer = VK_NULL_HANDLE;
@@ -61,28 +55,24 @@ void DAEDataBuffer::destroy()
 }
 
 void DAEDataBuffer::bindAsVertexBuffer(VkCommandBuffer commandBuffer) {
-	VkBuffer vertexBuffers[] = { m_VkBuffer };
-	VkDeviceSize offsets[] = { 0 };
-	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+    VkBuffer vertexBuffers[] = { m_VkBuffer };
+    VkDeviceSize offsets[] = { 0 };
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 }
 
-void DAEDataBuffer::bindAsIndexBuffer(VkCommandBuffer commandBuffer)
-{
-	vkCmdBindIndexBuffer(commandBuffer, m_VkBuffer, 0, VK_INDEX_TYPE_UINT16);
+void DAEDataBuffer::bindAsIndexBuffer(VkCommandBuffer commandBuffer) {
+    vkCmdBindIndexBuffer(commandBuffer, m_VkBuffer, 0, VK_INDEX_TYPE_UINT16);
 }
 
-VkBuffer DAEDataBuffer::getVkBuffer()
-{
+VkBuffer DAEDataBuffer::getVkBuffer() {
     return m_VkBuffer;
 }
 
-VkDeviceSize DAEDataBuffer::getSizeInBytes()
-{
+VkDeviceSize DAEDataBuffer::getSizeInBytes() {
     return m_Size;
 }
 
-uint32_t DAEDataBuffer::findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties)
-{
+uint32_t DAEDataBuffer::findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
     VkPhysicalDeviceMemoryProperties memProperties;
     vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 
@@ -93,9 +83,7 @@ uint32_t DAEDataBuffer::findMemoryType(VkPhysicalDevice physicalDevice, uint32_t
     }
 
     throw std::runtime_error("Failed to find suitable memory type!");
-
-
-
 }
+
 
 

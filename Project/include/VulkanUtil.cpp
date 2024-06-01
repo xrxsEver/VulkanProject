@@ -1,6 +1,6 @@
 #include "VulkanUtil.h"
 #include "Command/CommandBuffer.h" 
-#include "vulkanbase/VulkanBase.h"
+#include "VulkanBase.h"
 
 namespace VkUtils {
 
@@ -20,14 +20,12 @@ namespace VkUtils {
             func(instance, debugMessenger, pAllocator);
         }
     }
-
-    std::vector<char> readFile(const std::string& filename) {
+    std::vector<char> VkUtils::readFile(const std::string& filename) {
+        std::cout << "Attempting to open file: " << filename << std::endl;
         std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
-        // Check if file is open
         if (!file.is_open()) {
-            std::cerr << "Failed to open file: " << filename << std::endl;
-            throw std::runtime_error("failed to open file!");
+            throw std::runtime_error("failed to open file: " + filename);
         }
 
         size_t fileSize = static_cast<size_t>(file.tellg());
@@ -35,10 +33,11 @@ namespace VkUtils {
 
         file.seekg(0);
         file.read(buffer.data(), fileSize);
-        file.close();
 
+        file.close();
         return buffer;
     }
+
 
     QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
         QueueFamilyIndices indices;
@@ -117,48 +116,37 @@ namespace VkUtils {
         return details;
     }
 
-    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice device) {
+    uint32_t VkUtils::findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
         VkPhysicalDeviceMemoryProperties memProperties;
-
-        // Check if the device is valid
-        if (device == VK_NULL_HANDLE) {
-            throw std::runtime_error("Invalid Vulkan physical device handle.");
-        }
-
-        vkGetPhysicalDeviceMemoryProperties(device, &memProperties);
-
-        // Debugging information
-        std::cout << "Memory Type Count: " << memProperties.memoryTypeCount << std::endl;
+        vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-            std::cout << "Checking memory type " << i << std::endl;
-            std::cout << "Type Filter: " << typeFilter << ", Property Flags: " << memProperties.memoryTypes[i].propertyFlags << std::endl;
-
             if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-                std::cout << "Found suitable memory type: " << i << std::endl;
                 return i;
             }
         }
 
-        throw std::runtime_error("Failed to find suitable memory type!");
+        throw std::runtime_error("failed to find suitable memory type!");
     }
 
-    std::tuple<VkBuffer, VkDeviceMemory> CreateBuffer(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) {
 
-        VkBufferCreateInfo bufferInfo{
-            VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-            nullptr,
-            0,
-            size,
-            usage,
-            VK_SHARING_MODE_EXCLUSIVE,
-            0,
-            nullptr
-        };
+    std::tuple<VkBuffer, VkDeviceMemory> VkUtils::CreateBuffer(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties) {
+        if (size == 0) {
+            throw std::runtime_error("Buffer size must be greater than 0!");
+        }
 
         VkBuffer buffer;
-        if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
+        VkDeviceMemory bufferMemory;
+
+        VkBufferCreateInfo bufferInfo{};
+        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        bufferInfo.size = size;
+        bufferInfo.usage = usage;
+        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to create buffer!");
+        }
 
         VkMemoryRequirements memRequirements;
         vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
@@ -166,20 +154,20 @@ namespace VkUtils {
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties, physicalDevice);
+        allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
 
-        VkDeviceMemory bufferMemory;
-        if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+        if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate buffer memory!");
+        }
 
         vkBindBufferMemory(device, buffer, bufferMemory, 0);
 
-        return { buffer, bufferMemory };
+        return std::make_tuple(buffer, bufferMemory);
     }
 
 
 
-    void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue) {
+    void VkUtils::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue) {
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -211,5 +199,6 @@ namespace VkUtils {
 
         vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
     }
+
 
 }
