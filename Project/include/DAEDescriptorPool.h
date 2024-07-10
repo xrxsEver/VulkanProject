@@ -18,6 +18,7 @@ public:
     void createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout, const std::vector<VkBuffer>& buffers);
     void bindDescriptorSet(VkCommandBuffer buffer, VkPipelineLayout layout, size_t index);
     std::vector<VkDescriptorSet> getDescriptorSets() const { return m_DescriptorSets; }
+    VkDescriptorPool getDescriptorPool() const { return m_DescriptorPool; } // Add this method
 
 private:
     VkDevice m_Device;

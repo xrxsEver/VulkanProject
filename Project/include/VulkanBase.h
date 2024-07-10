@@ -13,11 +13,13 @@
 #include "command/CommandBuffer.h"
 #include "command/CommandPool.h"
 #include <algorithm>
+#include "Camera.h"
 
 // Forward declarations
 class SwapChainManager;
 class DAEMesh;
 class Shader2D;
+class Shader3D;
 class xrxsPipeline;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -53,6 +55,7 @@ private:
     void drawFrame();
     void recreateSwapChain();
     void updateUniformBuffer(uint32_t currentImage);
+    void processInput(float deltaTime);
 
     void keyEvent(int key, int scancode, int action, int mods);
     void mouseMove(GLFWwindow* window, double xpos, double ypos);
@@ -60,6 +63,12 @@ private:
     void beginRenderPass(const CommandBuffer& buffer, VkFramebuffer currentBuffer, VkExtent2D extent);
     void endRenderPass(const CommandBuffer& buffer);
     void recordCommandBuffer(CommandBuffer& commandBuffer, uint32_t imageIndex);
+
+    void printMatrix(const glm::mat4& mat, const std::string& name);
+    void loadModel();
+    void createTextureSampler();
+    VkImageView createImageView(VkImage image, VkFormat format);
+
 
     GLFWwindow* window;
     VkInstance instance;
@@ -69,6 +78,9 @@ private:
     VkQueue presentQueue;
     VkSurfaceKHR surface;
     VkSwapchainKHR swapChain;
+
+    Camera camera;
+
     std::unique_ptr<SwapChainManager> swapChainManager;
 
     std::vector<VkImage> swapChainImages;
@@ -87,20 +99,17 @@ private:
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
 
-    std::unique_ptr<DAEDescriptorPool<VertexUBO>> descriptorPool;
+    std::unique_ptr<DAEDescriptorPool<UBO>> descriptorPool;
 
     std::vector<VkBuffer> uniformBuffers;
     std::vector<VkDeviceMemory> uniformBuffersMemory;
     std::vector<VkDescriptorSet> descriptorSets;
 
-    std::vector<Vertex> vertices = {
-      {{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-      {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-      {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}
-    };
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
 
-    std::vector<uint32_t> indices = { 0, 1, 2, 2, 3, 0 }; // Example indices for a rectangle
-
+    VkImageView textureImageView;
+    VkSampler textureSampler;
 
     glm::vec2 m_DragStart;
     float m_Radius = 10.0f;
@@ -112,6 +121,7 @@ private:
 
     VkDebugUtilsMessengerEXT debugMessenger;
     std::unique_ptr<Shader2D> shader2D;
+    std::unique_ptr<Shader3D> shader3D;
     std::unique_ptr<xrxsPipeline> m_Pipeline;
     std::unique_ptr<DAEMesh> m_Mesh;
 

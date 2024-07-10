@@ -58,7 +58,7 @@ set(HEADERS
 )
 
 # Create the executable
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} "include/Camera.h" "include/Camera.cpp" "include/Shader3D.h" "Shader3D.cpp")
 
 # Link libraries
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} include ${glfw_INCLUDE_DIRS})

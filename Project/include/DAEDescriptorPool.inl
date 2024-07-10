@@ -126,4 +126,4 @@ void DAEDescriptorPool<UBO>::createUBOs(const VkUtils::VulkanContext& context) {
     }
 }
 
-template class DAEDescriptorPool<VertexUBO>;
+template class DAEDescriptorPool<UBO>;
