@@ -111,6 +111,11 @@ private:
     VkImageView textureImageView;
     VkSampler textureSampler;
 
+
+    //Mouse var 
+    bool lmbPressed = false;
+    void mouseScroll(GLFWwindow* window, double xoffset, double yoffset);
+
     glm::vec2 m_DragStart;
     float m_Radius = 10.0f;
     float m_Rotation = 0.0f;

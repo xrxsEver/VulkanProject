@@ -34,7 +34,7 @@ const std::vector<const char*> VulkanBase::deviceExtensions = {
 };
 
 VulkanBase::VulkanBase()
-    : camera(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 1.0f), -90.0f, 0.0f) {
+    : camera(glm::vec3(0.0f, 2.0f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f) {  // Side view
     initWindow();
     initVulkan();
 }
@@ -66,7 +66,12 @@ void VulkanBase::initWindow() {
         auto app = reinterpret_cast<VulkanBase*>(glfwGetWindowUserPointer(window));
         app->mouseEvent(window, button, action, mods);
         });
+    glfwSetScrollCallback(window, [](GLFWwindow* window, double xoffset, double yoffset) {
+        auto app = reinterpret_cast<VulkanBase*>(glfwGetWindowUserPointer(window));
+        app->mouseScroll(window, xoffset, yoffset);
+        });
 }
+
 
 
 void VulkanBase::initVulkan() {
@@ -109,6 +114,7 @@ void VulkanBase::mainLoop() {
 
     vkDeviceWaitIdle(device);
 }
+
 
 
 
@@ -206,20 +212,32 @@ void VulkanBase::mouseMove(GLFWwindow* window, double xpos, double ypos) {
         firstMouse = false;
     }
 
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // Reversed since y-coordinates range from bottom to top
-    lastX = xpos;
-    lastY = ypos;
+    if (lmbPressed) {
+        float xoffset = xpos - lastX;
+        float yoffset = lastY - ypos; // Reversed since y-coordinates range from bottom to top
+        lastX = xpos;
+        lastY = ypos;
 
-    camera.processMouseMovement(xoffset, yoffset);
+        camera.processMouseMovement(xoffset, yoffset);
+    }
+    else {
+        lastX = xpos;
+        lastY = ypos;
+    }
 }
+
 
 void VulkanBase::mouseEvent(GLFWwindow* window, int button, int action, int mods) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        double xpos, ypos;
-        glfwGetCursorPos(window, &xpos, &ypos);
-        std::cout << "Mouse left button pressed at position: (" << xpos << ", " << ypos << ")" << std::endl;
+        lmbPressed = true;
     }
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+        lmbPressed = false;
+    }
+}
+
+void VulkanBase::mouseScroll(GLFWwindow* window, double xoffset, double yoffset) {
+    camera.processMouseScroll(static_cast<float>(yoffset));
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
@@ -1042,12 +1060,12 @@ void VulkanBase::updateUniformBuffer(uint32_t currentImage) {
     ubo.proj = glm::perspective(glm::radians(camera.zoom),
         swapChainManager->getSwapChainExtent().width / static_cast<float>(swapChainManager->getSwapChainExtent().height),
         0.1f,
-        100.0f); // Adjust far plane to ensure the object is within view
+        100.0f);
     ubo.proj[1][1] *= -1; // Vulkan clip space Y coordinate is inverted
 
-    printMatrix(ubo.model, "Model Matrix");
-    printMatrix(ubo.view, "View Matrix");
-    printMatrix(ubo.proj, "Projection Matrix");
+   // printMatrix(ubo.model, "Model Matrix");
+   // printMatrix(ubo.view, "View Matrix");
+   // printMatrix(ubo.proj, "Projection Matrix");
 
     void* data;
     vkMapMemory(device, uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
@@ -1068,18 +1086,18 @@ void VulkanBase::printMatrix(const glm::mat4& mat, const std::string& name) {
 
 
 void VulkanBase::processInput(float deltaTime) {
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.processKeyboard(deltaTime, GLFW_KEY_W);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.processKeyboard(deltaTime, GLFW_KEY_S);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.processKeyboard(deltaTime, GLFW_KEY_A);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.processKeyboard(deltaTime, GLFW_KEY_D);
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)  // Move up
-        camera.processKeyboard(deltaTime, GLFW_KEY_Q);
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)  // Move down
-        camera.processKeyboard(deltaTime, GLFW_KEY_E);
+    if (lmbPressed) {
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            camera.processKeyboard(GLFW_KEY_W, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            camera.processKeyboard(GLFW_KEY_S, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            camera.processKeyboard(GLFW_KEY_A, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            camera.processKeyboard(GLFW_KEY_D, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)  // Move up
+            camera.processKeyboard(GLFW_KEY_Q, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)  // Move down
+            camera.processKeyboard(GLFW_KEY_E, deltaTime);
+    }
 }
-
-

@@ -1,8 +1,8 @@
 #include "Camera.h"
 
-const float YAW = -90.0f;
-const float PITCH = 0.0f;
-const float SPEED = 2.f; // Slow down speed
+const float YAW = -90.0f;  // Look along the negative Z axis
+const float PITCH = 0.0f;  // No initial pitch
+const float SPEED = 0.0005f;
 const float SENSITIVITY = 0.1f;
 const float ZOOM = 45.0f;
 
@@ -20,7 +20,7 @@ glm::mat4 Camera::getViewMatrix() const {
     return glm::lookAt(position, position + front, up);
 }
 
-void Camera::processKeyboard(float deltaTime, int direction) {
+void Camera::processKeyboard(int direction, float deltaTime) {
     float velocity = movementSpeed * deltaTime;
     if (direction == GLFW_KEY_W)
         position += front * velocity;
@@ -54,12 +54,10 @@ void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPi
 }
 
 void Camera::processMouseScroll(float yoffset) {
-    if (zoom >= 1.0f && zoom <= 45.0f)
-        zoom -= yoffset;
-    if (zoom <= 1.0f)
-        zoom = 1.0f;
-    if (zoom >= 45.0f)
-        zoom = 45.0f;
+    movementSpeed += yoffset;
+    if (movementSpeed < 0.1f) {
+        movementSpeed = 0.1f;  // Prevent negative or zero speed
+    }
 }
 
 void Camera::updateCameraVectors() {
