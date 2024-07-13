@@ -22,7 +22,7 @@ FetchContent_MakeAvailable(glfw)
 find_package(Vulkan REQUIRED)
 
 # Include Directories
-include_directories(${Vulkan_INCLUDE_DIRS} include ${glfw_INCLUDE_DIRS})
+include_directories(${Vulkan_INCLUDE_DIRS} include ${glfw_INCLUDE_DIRS} Lib)
 
 # Add subdirectories
 add_subdirectory(shaders)
@@ -39,6 +39,7 @@ set(SOURCES
     SwapChainManager.cpp
     Shader2D.cpp
     ModelLoader.cpp
+    Lib/stb_image.h
 )
 
 # Set header files
@@ -61,7 +62,7 @@ set(HEADERS
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} "include/Camera.h" "include/Camera.cpp" "include/Shader3D.h" "Shader3D.cpp")
 
 # Link libraries
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} include ${glfw_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} include ${glfw_INCLUDE_DIRS} Lib)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw CommandLib)
 
 # Ensure shaders are built before the main project

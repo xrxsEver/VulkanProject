@@ -144,4 +144,13 @@ private:
     std::vector<const char*> getRequiredExtensions();
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
     static const std::vector<const char*> deviceExtensions;
+
+    //texutre part 
+
+    void createTextureImage();
+    void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+    VkImage textureImage;
+    VkDeviceMemory textureImageMemory;
+    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 };
