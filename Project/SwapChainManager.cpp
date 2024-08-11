@@ -138,6 +138,7 @@ void SwapChainManager::createImageViews() {
 
 
 void SwapChainManager::cleanupSwapChain() {
+
     for (auto imageView : m_swapChainImageViews) {
         vkDestroyImageView(m_device, imageView, nullptr);
     }

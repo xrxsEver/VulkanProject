@@ -67,7 +67,7 @@ private:
     void printMatrix(const glm::mat4& mat, const std::string& name);
     void loadModel();
     void createTextureSampler();
-    VkImageView createImageView(VkImage image, VkFormat format);
+    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 
 
     GLFWwindow* window;
@@ -144,7 +144,7 @@ private:
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
     static const std::vector<const char*> deviceExtensions;
 
-    //texutre part 
+    //texture part 
 
     void createTextureImage();
     void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
@@ -158,5 +158,13 @@ private:
     VkSampler textureSampler;
     VkSamplerCreateInfo samplerInfo;
 
+    //Depth part
 
+    VkImage depthImage;
+    VkDeviceMemory depthImageMemory;
+    VkImageView depthImageView;
+    void createDepthResources();
+    VkFormat findDepthFormat();
+    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+    bool hasStencilComponent(VkFormat format);
 };
