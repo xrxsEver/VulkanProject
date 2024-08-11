@@ -40,7 +40,7 @@ const std::vector<const char*> VulkanBase::deviceExtensions = {
 
 
 VulkanBase::VulkanBase()
-    : camera(glm::vec3(0.0f, 2.0f, 5.0f), glm::vec3(0.0f, -1.0f, 0.0f), -90.0f, 0.0f) {  // Side view
+    : camera(glm::vec3(0.0f, 2.0f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f) {  // Side view
     initWindow();
     initVulkan();
 }
@@ -475,36 +475,36 @@ void VulkanBase::loadModel() {
     printCurrentWorkingDirectory();
 
 
-    vertices = {
-    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+ //      vertices = {
+ //      {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+ //      {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+ //      {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+ //      {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+ //     
+ //      {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+ //      {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+ //      {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+ //      {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+ //     
+ //      };
+ //     
+ //      indices = { 0, 1, 2, 2, 3, 0,
+ //      4, 5, 6, 6, 7, 4
+ //      };
 
-    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 
-    };
-
-    indices = { 0, 1, 2, 2, 3, 0,
-    4, 5, 6, 6, 7, 4
-    };
-
-
-  //  std::string modelPath = "Res/Castle.obj";
-  //  std::filesystem::path fullPath = std::filesystem::absolute(modelPath);
-  //  std::cout << "Attempting to load model from path: " << fullPath << std::endl;
-  //
-  //  if (!std::filesystem::exists(fullPath)) {
-  //      throw std::runtime_error("Model file does not exist: " + fullPath.string());
-  //  }
-  //
-  //
-  //  if (!ModelLoader::loadOBJ(modelPath, vertices, indices)) {
-  //      throw std::runtime_error("Failed to load model!");
-  //  }
+     std::string modelPath = "Res/Castle.obj";
+     std::filesystem::path fullPath = std::filesystem::absolute(modelPath);
+     std::cout << "Attempting to load model from path: " << fullPath << std::endl;
+    
+     if (!std::filesystem::exists(fullPath)) {
+         throw std::runtime_error("Model file does not exist: " + fullPath.string());
+     }
+    
+    
+     if (!ModelLoader::loadOBJ(modelPath, vertices, indices)) {
+         throw std::runtime_error("Failed to load model!");
+     }
 }
 
 
@@ -721,7 +721,7 @@ bool VulkanBase::checkDeviceExtensionSupport(VkPhysicalDevice device) {
 void VulkanBase::createTextureImage()
 {
     int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load("textures/texture.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    stbi_uc* pixels = stbi_load("textures/texture.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
     if (!pixels) {
