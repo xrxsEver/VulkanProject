@@ -178,4 +178,15 @@ private:
     VkDeviceMemory colorImageMemory;
     VkImageView colorImageView;
     void createColorResources();
+
+    //light 
+
+    std::vector<VkBuffer> lightInfoBuffers;
+    std::vector<VkDeviceMemory> lightInfoBuffersMemory;
+    void createLightInfoBuffers();
+
+    void updateLightInfoBuffer(uint32_t currentImage);
+    bool rotationEnabled = false;
+    bool rKeyPressed = false;
+
 };

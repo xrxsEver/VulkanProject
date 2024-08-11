@@ -23,6 +23,7 @@
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 #include "ModelLoader.h"
+#include <glm/glm.hpp>
 
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
@@ -40,7 +41,7 @@ const std::vector<const char*> VulkanBase::deviceExtensions = {
 
 
 VulkanBase::VulkanBase()
-    : camera(glm::vec3(0.0f, 2.0f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f) {  // Side view
+    : camera(glm::vec3(0.0f, 1.5f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f) {  // Side view
     initWindow();
     initVulkan();
 }
@@ -104,6 +105,8 @@ void VulkanBase::initVulkan() {
     createVertexBuffer();
     createIndexBuffer();
     createUniformBuffers();
+    createLightInfoBuffers();  
+
     createDescriptorPool();
     createDescriptorSets();
     createCommandBuffers();
@@ -146,6 +149,11 @@ void VulkanBase::cleanup() {
 
     for (auto framebuffer : swapChainFramebuffers) {
         vkDestroyFramebuffer(device, framebuffer, nullptr);
+    }
+
+    for (size_t i = 0; i < lightInfoBuffers.size(); i++) {
+        vkDestroyBuffer(device, lightInfoBuffers[i], nullptr);
+        vkFreeMemory(device, lightInfoBuffersMemory[i], nullptr);
     }
 
     vkDestroyPipeline(device, graphicsPipeline, nullptr);
@@ -455,24 +463,21 @@ void VulkanBase::createFrameBuffers() {
     swapChainFramebuffers.resize(swapChainManager->getSwapChainImageViews().size());
 
     for (size_t i = 0; i < swapChainManager->getSwapChainImageViews().size(); i++) {
-        // Create an array to hold both the swap chain image view and the depth image view
         std::array<VkImageView, 3> attachments = {
             colorImageView,
             depthImageView,
             swapChainManager->getSwapChainImageViews()[i]
         };
 
-        // Fill out the VkFramebufferCreateInfo structure
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = renderPass; // The render pass to be used with this framebuffer
-        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size()); // Number of attachments
-        framebufferInfo.pAttachments = attachments.data(); // Array of attachments
-        framebufferInfo.width = swapChainManager->getSwapChainExtent().width; // Framebuffer width
-        framebufferInfo.height = swapChainManager->getSwapChainExtent().height; // Framebuffer height
-        framebufferInfo.layers = 1; // Number of layers in the framebuffer
+        framebufferInfo.renderPass = renderPass;
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+        framebufferInfo.pAttachments = attachments.data();
+        framebufferInfo.width = swapChainManager->getSwapChainExtent().width;
+        framebufferInfo.height = swapChainManager->getSwapChainExtent().height;
+        framebufferInfo.layers = 1;
 
-        // Create the framebuffer and check for errors
         if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
             throw std::runtime_error("failed to create framebuffer!");
         }
@@ -926,6 +931,38 @@ void VulkanBase::createColorResources()
 
 }
 
+void VulkanBase::createLightInfoBuffers()
+{
+    VkDeviceSize bufferSize = sizeof(LightInfo);
+
+    lightInfoBuffers.resize(swapChainManager->getSwapChainImages().size());
+    lightInfoBuffersMemory.resize(swapChainManager->getSwapChainImages().size());
+
+    for (size_t i = 0; i < swapChainManager->getSwapChainImages().size(); i++) {
+        createBuffer(bufferSize,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            lightInfoBuffers[i],
+            lightInfoBuffersMemory[i]);
+    }
+
+}
+
+void VulkanBase::updateLightInfoBuffer(uint32_t currentImage)
+{
+    LightInfo lightInfo{};
+    lightInfo.lightPos = glm::vec3(2.0f, 4.0f, 2.0f);  // Set your desired light position
+    lightInfo.viewPos = camera.position;  // Set the camera position as the view position
+
+    void* data;
+    vkMapMemory(device, lightInfoBuffersMemory[currentImage], 0, sizeof(lightInfo), 0, &data);
+    memcpy(data, &lightInfo, sizeof(lightInfo));
+    vkUnmapMemory(device, lightInfoBuffersMemory[currentImage]);
+
+
+}
+
+
 void VulkanBase::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
 {
     // Check if image format supports linear blitting
@@ -1076,25 +1113,35 @@ void VulkanBase::createUniformBuffers() {
 }
 
 void VulkanBase::createDescriptorSetLayout() {
-    VkDescriptorSetLayoutBinding uboLayoutBinding{};
-    uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.pImmutableSamplers = nullptr;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+
+    VkDescriptorSetLayoutBinding uboLayoutBinding1{};
+    uboLayoutBinding1.binding = 0;
+    uboLayoutBinding1.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboLayoutBinding1.descriptorCount = 1;
+    uboLayoutBinding1.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    uboLayoutBinding1.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutBinding samplerLayoutBinding{};
     samplerLayoutBinding.binding = 1;
-    samplerLayoutBinding.descriptorCount = 1;
     samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    samplerLayoutBinding.pImmutableSamplers = nullptr;
+    samplerLayoutBinding.descriptorCount = 1;
     samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    samplerLayoutBinding.pImmutableSamplers = nullptr;
 
-    std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+    VkDescriptorSetLayoutBinding uboLayoutBinding2{};
+    uboLayoutBinding2.binding = 2;  // Binding index for the LightInfo block
+    uboLayoutBinding2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboLayoutBinding2.descriptorCount = 1;
+    uboLayoutBinding2.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    uboLayoutBinding2.pImmutableSamplers = nullptr;
+
+    std::array<VkDescriptorSetLayoutBinding, 3> bindings = { uboLayoutBinding1, samplerLayoutBinding, uboLayoutBinding2 };
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     layoutInfo.pBindings = bindings.data();
+
 
     if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create descriptor set layout!");
@@ -1183,6 +1230,7 @@ void VulkanBase::createGraphicsPipeline() {
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+    pipelineLayoutInfo.pushConstantRangeCount = 0;
 
     if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create pipeline layout!");
@@ -1331,12 +1379,22 @@ void VulkanBase::createDescriptorSets() {
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UBO);
 
+        // Ensure that lightInfoBuffers are correctly initialized
+        if (i >= lightInfoBuffers.size()) {
+            throw std::runtime_error("lightInfoBuffers is out of range!");
+        }
+
+        VkDescriptorBufferInfo lightInfoBufferInfo{};
+        lightInfoBufferInfo.buffer = lightInfoBuffers[i];
+        lightInfoBufferInfo.offset = 0;
+        lightInfoBufferInfo.range = sizeof(LightInfo);
+
         VkDescriptorImageInfo imageInfo{};
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         imageInfo.imageView = textureImageView;
         imageInfo.sampler = textureSampler;
 
-        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+        std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[0].dstSet = descriptorSets[i];
@@ -1354,8 +1412,18 @@ void VulkanBase::createDescriptorSets() {
         descriptorWrites[1].descriptorCount = 1;
         descriptorWrites[1].pImageInfo = &imageInfo;
 
+        descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[2].dstSet = descriptorSets[i];
+        descriptorWrites[2].dstBinding = 2;  // Binding index for LightInfo
+        descriptorWrites[2].dstArrayElement = 0;
+        descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrites[2].descriptorCount = 1;
+        descriptorWrites[2].pBufferInfo = &lightInfoBufferInfo;
+
         vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
+
+
 }
 
 
@@ -1480,17 +1548,21 @@ void VulkanBase::drawFrame() {
 
 void VulkanBase::updateUniformBuffer(uint32_t currentImage) {
     UBO ubo{};
-    ubo.model = glm::mat4(1.0f);
+    if (rotationEnabled) {
+        ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f) * static_cast<float>(glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f));  // Rotate over time
+    }
+    else {
+        ubo.model = glm::mat4(1.0f);  // No rotation, just identity matrix
+    }
     ubo.view = camera.getViewMatrix();
     ubo.proj = glm::perspective(glm::radians(camera.zoom),
         swapChainManager->getSwapChainExtent().width / static_cast<float>(swapChainManager->getSwapChainExtent().height),
-        0.1f,
+        0.1f, 
         100.0f);
     ubo.proj[1][1] *= -1; // Vulkan clip space Y coordinate is inverted
 
-   // printMatrix(ubo.model, "Model Matrix");
-   // printMatrix(ubo.view, "View Matrix");
-   // printMatrix(ubo.proj, "Projection Matrix");
+    ubo.lightPos = glm::vec3(1.0f, 2.0f, 2.0f); 
+    ubo.viewPos = camera.position;  
 
     void* data;
     vkMapMemory(device, uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
@@ -1524,5 +1596,14 @@ void VulkanBase::processInput(float deltaTime) {
             camera.processKeyboard(GLFW_KEY_Q, deltaTime);
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)  // Move down
             camera.processKeyboard(GLFW_KEY_E, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS && !rKeyPressed) {
+            rotationEnabled = !rotationEnabled;  // Toggle the rotation flag
+            rKeyPressed = true;
+        }
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_RELEASE) {
+            rKeyPressed = false;  // Reset the flag when the key is released
+        }
+
+
     }
 }
