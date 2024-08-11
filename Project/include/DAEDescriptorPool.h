@@ -15,7 +15,8 @@ public:
 
     void initialize(const VkUtils::VulkanContext& context);
     void setUBO(UBO data, size_t index);
-    void createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout, const std::vector<VkBuffer>& buffers);
+   // void createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout, const std::vector<VkBuffer>& buffers);
+    void createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout, const std::vector<VkBuffer>& buffers, VkImageView textureImageView, VkSampler textureSampler);
     void bindDescriptorSet(VkCommandBuffer buffer, VkPipelineLayout layout, size_t index);
     std::vector<VkDescriptorSet> getDescriptorSets() const { return m_DescriptorSets; }
     VkDescriptorPool getDescriptorPool() const { return m_DescriptorPool; } // Add this method

@@ -108,8 +108,7 @@ private:
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 
-    VkImageView textureImageView;
-    VkSampler textureSampler;
+  
 
 
     //Mouse var 
@@ -153,4 +152,11 @@ private:
     VkImage textureImage;
     VkDeviceMemory textureImageMemory;
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+    void createTextureImageView();
+
+    VkImageView textureImageView;
+    VkSampler textureSampler;
+    VkSamplerCreateInfo samplerInfo;
+
+
 };

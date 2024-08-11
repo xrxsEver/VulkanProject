@@ -47,8 +47,9 @@ void DAEDescriptorPool<UBO>::setUBO(UBO data, size_t index) {
     m_UBOs[index]->update(data);
 }
 
+
 template <class UBO>
-void DAEDescriptorPool<UBO>::createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout, const std::vector<VkBuffer>& buffers) {
+void DAEDescriptorPool<UBO>::createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout, const std::vector<VkBuffer>& buffers, VkImageView textureImageView, VkSampler textureSampler) {
     std::vector<VkDescriptorSetLayout> layouts(m_Count, descriptorSetLayout);
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -67,18 +68,33 @@ void DAEDescriptorPool<UBO>::createDescriptorSets(VkDescriptorSetLayout descript
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UBO);
 
-        VkWriteDescriptorSet descriptorWrite{};
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet = m_DescriptorSets[i];
-        descriptorWrite.dstBinding = 0;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = &bufferInfo;
+        VkDescriptorImageInfo imageInfo{};
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo.imageView = textureImageView;
+        imageInfo.sampler = textureSampler;
 
-        vkUpdateDescriptorSets(m_Device, 1, &descriptorWrite, 0, nullptr);
+        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+
+        descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[0].dstSet = m_DescriptorSets[i];
+        descriptorWrites[0].dstBinding = 0;
+        descriptorWrites[0].dstArrayElement = 0;
+        descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrites[0].descriptorCount = 1;
+        descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+        descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[1].dstSet = m_DescriptorSets[i];
+        descriptorWrites[1].dstBinding = 1;
+        descriptorWrites[1].dstArrayElement = 0;
+        descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[1].descriptorCount = 1;
+        descriptorWrites[1].pImageInfo = &imageInfo;
+
+        vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 }
+
 
 template <class UBO>
 void DAEDescriptorPool<UBO>::bindDescriptorSet(VkCommandBuffer buffer, VkPipelineLayout layout, size_t index) {

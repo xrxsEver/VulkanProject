@@ -37,6 +37,8 @@ const std::vector<const char*> VulkanBase::deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
+
+
 VulkanBase::VulkanBase()
     : camera(glm::vec3(0.0f, 2.0f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f) {  // Side view
     initWindow();
@@ -90,7 +92,11 @@ void VulkanBase::initVulkan() {
     createGraphicsPipeline();
     createFrameBuffers();
     createCommandPool();
+
     createTextureImage();
+    createTextureImageView();
+    createTextureSampler();
+
     loadModel();  
     createVertexBuffer();
     createIndexBuffer();
@@ -148,6 +154,11 @@ void VulkanBase::cleanup() {
     }
 
     vkDestroySwapchainKHR(device, swapChainManager->getSwapChain(), nullptr);
+
+    vkDestroySampler(device, textureSampler, nullptr);
+    vkDestroyImageView(device, textureImageView, nullptr);
+
+
     vkDestroyDevice(device, nullptr);
 
     vkDestroyImage(device, textureImage, nullptr);
@@ -374,6 +385,7 @@ void VulkanBase::createLogicalDevice() {
     }
 
     VkPhysicalDeviceFeatures deviceFeatures{};
+    deviceFeatures.samplerAnisotropy = VK_TRUE;
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -429,17 +441,29 @@ void printCurrentWorkingDirectory() {
 void VulkanBase::loadModel() {
     printCurrentWorkingDirectory();
 
-    std::string modelPath = "Res/Castle.obj";
-    std::filesystem::path fullPath = std::filesystem::absolute(modelPath);
-    std::cout << "Attempting to load model from path: " << fullPath << std::endl;
 
-    if (!std::filesystem::exists(fullPath)) {
-        throw std::runtime_error("Model file does not exist: " + fullPath.string());
-    }
+    vertices = {
+        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+        {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+    };
 
-    if (!ModelLoader::loadOBJ(modelPath, vertices, indices)) {
-        throw std::runtime_error("Failed to load model!");
-    }
+    indices = { 0, 1, 2, 2, 3, 0 };
+
+
+  //  std::string modelPath = "Res/Castle.obj";
+  //  std::filesystem::path fullPath = std::filesystem::absolute(modelPath);
+  //  std::cout << "Attempting to load model from path: " << fullPath << std::endl;
+  //
+  //  if (!std::filesystem::exists(fullPath)) {
+  //      throw std::runtime_error("Model file does not exist: " + fullPath.string());
+  //  }
+  //
+  //
+  //  if (!ModelLoader::loadOBJ(modelPath, vertices, indices)) {
+  //      throw std::runtime_error("Failed to load model!");
+  //  }
 }
 
 
@@ -679,8 +703,8 @@ void VulkanBase::createTextureImage()
     copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
     transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    vkDestroyBuffer(device, stagingBuffer, nullptr);
-    vkFreeMemory(device, stagingBufferMemory, nullptr);
+ //   vkDestroyBuffer(device, stagingBuffer, nullptr);
+   // vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
 void VulkanBase::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
@@ -772,6 +796,11 @@ void VulkanBase::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMem
     vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
 
+void VulkanBase::createTextureImageView()
+{
+    textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB);
+}
+
 void VulkanBase::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
     auto app = reinterpret_cast<VulkanBase*>(glfwGetWindowUserPointer(window));
     app->framebufferResized = true;
@@ -832,7 +861,14 @@ void VulkanBase::createDescriptorSetLayout() {
     uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     uboLayoutBinding.pImmutableSamplers = nullptr;
 
-    std::array<VkDescriptorSetLayoutBinding, 1> bindings = { uboLayoutBinding };
+    VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+    samplerLayoutBinding.binding = 1;
+    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerLayoutBinding.descriptorCount = 1;
+    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    samplerLayoutBinding.pImmutableSamplers = nullptr;
+
+    std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -842,6 +878,7 @@ void VulkanBase::createDescriptorSetLayout() {
         throw std::runtime_error("failed to create descriptor set layout!");
     }
 }
+
 
 void VulkanBase::createGraphicsPipeline() {
     shader3D = std::make_unique<Shader3D>(device, "shaders/3d_shader.vert.spv", "shaders/3d_shader.frag.spv");
@@ -1062,18 +1099,33 @@ void VulkanBase::createDescriptorSets() {
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UBO);
 
-        VkWriteDescriptorSet descriptorWrite{};
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet = descriptorSets[i];
-        descriptorWrite.dstBinding = 0;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = &bufferInfo;
+        VkDescriptorImageInfo imageInfo{};
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo.imageView = textureImageView;
+        imageInfo.sampler = textureSampler;
 
-        vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+
+        descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[0].dstSet = descriptorSets[i];
+        descriptorWrites[0].dstBinding = 0;
+        descriptorWrites[0].dstArrayElement = 0;
+        descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrites[0].descriptorCount = 1;
+        descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+        descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[1].dstSet = descriptorSets[i];
+        descriptorWrites[1].dstBinding = 1;
+        descriptorWrites[1].dstArrayElement = 0;
+        descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[1].descriptorCount = 1;
+        descriptorWrites[1].pImageInfo = &imageInfo;
+
+        vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 }
+
 
 
 
@@ -1100,6 +1152,10 @@ VkImageView VulkanBase::createImageView(VkImage image, VkFormat format) {
 
 
 void VulkanBase::createTextureSampler() {
+
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
     VkSamplerCreateInfo samplerInfo{};
     samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
     samplerInfo.magFilter = VK_FILTER_LINEAR;
@@ -1108,7 +1164,7 @@ void VulkanBase::createTextureSampler() {
     samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     samplerInfo.anisotropyEnable = VK_TRUE;
-    samplerInfo.maxAnisotropy = 16;
+    samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
     samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
     samplerInfo.unnormalizedCoordinates = VK_FALSE;
     samplerInfo.compareEnable = VK_FALSE;
