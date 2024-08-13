@@ -19,7 +19,7 @@ public:
     void createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout, const std::vector<VkBuffer>& buffers, VkImageView textureImageView, VkSampler textureSampler);
     void bindDescriptorSet(VkCommandBuffer buffer, VkPipelineLayout layout, size_t index);
     std::vector<VkDescriptorSet> getDescriptorSets() const { return m_DescriptorSets; }
-    VkDescriptorPool getDescriptorPool() const { return m_DescriptorPool; } // Add this method
+    VkDescriptorPool getDescriptorPool() const { return m_DescriptorPool; } 
 
 private:
     VkDevice m_Device;

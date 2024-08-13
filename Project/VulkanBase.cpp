@@ -6,6 +6,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <Lib/stb_image.h>
 
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_vulkan.h"
+
+
 
 
 
@@ -41,9 +45,11 @@ const std::vector<const char*> VulkanBase::deviceExtensions = {
 
 
 VulkanBase::VulkanBase()
-    : camera(glm::vec3(0.0f, 1.5f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f) {  // Side view
+    : camera(glm::vec3(0.0f, 1.5f, 55.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f) {  // Side view
     initWindow();
     initVulkan();
+    initImGui();
+
 }
 
 VulkanBase::~VulkanBase() {
@@ -111,7 +117,65 @@ void VulkanBase::initVulkan() {
     createDescriptorSets();
     createCommandBuffers();
     createSyncObjects();
+
 }
+
+void VulkanBase::initImGui() {
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForVulkan(window, true);
+
+    // Initialize Vulkan for ImGui
+    ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.Instance = instance;  
+    init_info.PhysicalDevice = physicalDevice;  
+    init_info.Device = device;  
+    init_info.QueueFamily = VkUtils::FindQueueFamilies(physicalDevice, surface).graphicsFamily.value(); 
+    init_info.Queue = graphicsQueue;  
+    init_info.PipelineCache = VK_NULL_HANDLE;  
+    init_info.DescriptorPool = descriptorPool->getDescriptorPool(); 
+    init_info.Subpass = 0; 
+    init_info.MinImageCount = 2;  
+    init_info.ImageCount = swapChainManager->getSwapChainImages().size();  
+    init_info.MSAASamples = msaaSamples;  
+    init_info.Allocator = nullptr;  
+    init_info.CheckVkResultFn = [](VkResult err) {
+        if (err != VK_SUCCESS) {
+            throw std::runtime_error("ImGui Vulkan initialization failed with error code: " + std::to_string(err));
+        }
+        };
+
+    // Validate all required Vulkan objects and values
+    IM_ASSERT(init_info.Instance != VK_NULL_HANDLE);
+    IM_ASSERT(init_info.PhysicalDevice != VK_NULL_HANDLE);
+    IM_ASSERT(init_info.Device != VK_NULL_HANDLE);
+    IM_ASSERT(init_info.Queue != VK_NULL_HANDLE);
+    IM_ASSERT(init_info.DescriptorPool != VK_NULL_HANDLE);
+    IM_ASSERT(init_info.MinImageCount >= 2);
+    IM_ASSERT(init_info.ImageCount >= init_info.MinImageCount);
+    IM_ASSERT(renderPass != VK_NULL_HANDLE);
+
+    // Initialize ImGui Vulkan binding
+    ImGui_ImplVulkan_Init(&init_info, renderPass);
+
+    // Upload Fonts
+    VkCommandBuffer command_buffer = beginSingleTimeCommands();
+    ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
+    endSingleTimeCommands(command_buffer);
+    vkDeviceWaitIdle(device);
+
+    ImGui_ImplVulkan_DestroyFontUploadObjects();
+}
+
 
 
 void VulkanBase::mainLoop() {
@@ -136,6 +200,12 @@ void VulkanBase::mainLoop() {
 
 
 void VulkanBase::cleanup() {
+
+    // Wait for the device to be idle before starting the cleanup process
+    vkDeviceWaitIdle(device);
+   
+    ImGui::DestroyContext();
+
     vkDestroyBuffer(device, vertexBuffer, nullptr);
     vkFreeMemory(device, vertexBufferMemory, nullptr);
 
@@ -527,7 +597,7 @@ void VulkanBase::loadModel() {
          throw std::runtime_error("Model file does not exist: " + fullPath.string());
      }
     
-    
+
      if (!ModelLoader::loadOBJ(modelPath, vertices, indices)) {
          throw std::runtime_error("Failed to load model!");
      }
@@ -599,8 +669,15 @@ void VulkanBase::recordCommandBuffer(CommandBuffer& commandBuffer, uint32_t imag
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     commandBuffer.begin(&beginInfo);
+
+    // Update Vulkan clear color from ImGui color picker
+    clearColor.color.float32[0] = backgroundColor.x;
+    clearColor.color.float32[1] = backgroundColor.y;
+    clearColor.color.float32[2] = backgroundColor.z;
+    clearColor.color.float32[3] = backgroundColor.w;
+
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -611,7 +688,7 @@ void VulkanBase::recordCommandBuffer(CommandBuffer& commandBuffer, uint32_t imag
 
 
     std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+    clearValues[0] = clearColor;
     clearValues[1].depthStencil = { 1.0f, 0 };
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -626,6 +703,30 @@ void VulkanBase::recordCommandBuffer(CommandBuffer& commandBuffer, uint32_t imag
     vkCmdBindIndexBuffer(commandBuffer.getVkCommandBuffer(), indexBuffer, 0, VK_INDEX_TYPE_UINT32);
     vkCmdBindDescriptorSets(commandBuffer.getVkCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[imageIndex], 0, nullptr);
     vkCmdDrawIndexed(commandBuffer.getVkCommandBuffer(), static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::SetNextWindowPos(ImVec2(0, 0));  // Position the window at the top-left corner
+    ImGui::SetNextWindowSize(ImVec2(300, ImGui::GetIO().DisplaySize.y));  // Set the size of the window
+
+    ImGui::Begin("Control Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+    // Checkbox for rotation
+    ImGui::Checkbox("Rotate Object", &rotationEnabled);
+    ImGui::Text("App avg %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    ImGui::Checkbox("Wireframe Mode", &wireframeEnabled);
+
+    // Color picker for background color
+    ///ImGui::ColorEdit3("Background Color", (float*)&backgroundColor);
+    ImGui::ColorPicker3("Background", (float*)&backgroundColor);
+    // End the window
+    ImGui::End();
+
+
+    ImGui::Render();
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(),commandBuffer.getVkCommandBuffer(),0);
 
     commandBuffer.endRenderPass();
     commandBuffer.end();
@@ -1190,11 +1291,10 @@ void VulkanBase::createGraphicsPipeline() {
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.polygonMode = wireframeEnabled ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
 
-    //TODO change the cullmode before finish ! 
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -1265,6 +1365,14 @@ void VulkanBase::createGraphicsPipeline() {
 
 
 
+void VulkanBase::updatePipelineIfNeeded() {
+    if (currentWireframeState != wireframeEnabled) {
+        // Pipeline needs to be recreated
+        vkDestroyPipeline(device, graphicsPipeline, nullptr);
+        createGraphicsPipeline(); 
+        currentWireframeState = wireframeEnabled;
+    }
+}
 
 
 
@@ -1486,6 +1594,7 @@ void VulkanBase::createTextureSampler() {
 
 void VulkanBase::drawFrame() {
     vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    updatePipelineIfNeeded();
 
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(device, swapChainManager->getSwapChain(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
@@ -1496,15 +1605,18 @@ void VulkanBase::drawFrame() {
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("failed to acquire swap chain image!");
     }
-
-    vkResetFences(device, 1, &inFlightFences[currentFrame]);
     commandBuffers[imageIndex].reset();
+
 
     // Update the uniform buffer with the latest transformation matrices
     updateUniformBuffer(imageIndex);
-
     recordCommandBuffer(commandBuffers[imageIndex], imageIndex);
 
+
+    vkResetFences(device, 1, &inFlightFences[currentFrame]);
+
+
+    // Submit the command buffer
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
@@ -1518,6 +1630,7 @@ void VulkanBase::drawFrame() {
     VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
+
 
     if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
         throw std::runtime_error("failed to submit draw command buffer!");

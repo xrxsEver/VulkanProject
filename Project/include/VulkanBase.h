@@ -14,6 +14,7 @@
 #include "command/CommandPool.h"
 #include <algorithm>
 #include "Camera.h"
+#include "imgui.h"
 
 // Forward declarations
 class SwapChainManager;
@@ -33,6 +34,7 @@ public:
 private:
     void initWindow();
     void initVulkan();
+    void initImGui();
     void mainLoop();
     void cleanup();
     void createInstance();
@@ -188,5 +190,9 @@ private:
     void updateLightInfoBuffer(uint32_t currentImage);
     bool rotationEnabled = false;
     bool rKeyPressed = false;
-
+    ImVec4 backgroundColor = ImVec4(0.5f, 0.2f, 0.2f, 1.0f);  // Initial background color for ImGui
+    VkClearValue clearColor;  // Clear value used by Vulkan
+    bool wireframeEnabled = false;
+    bool currentWireframeState = false;  // Store the last known wireframe state
+    void updatePipelineIfNeeded();
 };
