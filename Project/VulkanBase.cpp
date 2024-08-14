@@ -45,7 +45,8 @@ const std::vector<const char*> VulkanBase::deviceExtensions = {
 
 
 VulkanBase::VulkanBase()
-    : camera(glm::vec3(0.0f, 1.5f, 55.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f) {  // Side view
+    : camera(glm::vec3(0.0f, 1.5f, 55.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f) ,
+    currentToggleInfo({ VK_FALSE, VK_TRUE, VK_TRUE, VK_FALSE, VK_FALSE, VK_FALSE }) {  // Initialize ToggleInfo to default values
     initWindow();
     initVulkan();
     initImGui();
@@ -104,7 +105,10 @@ void VulkanBase::initVulkan() {
     createFrameBuffers();
 
     createTextureImage();
+    createAdditionalTextures();
+
     createTextureImageView();
+
     createTextureSampler();
 
     loadModel();  
@@ -112,6 +116,7 @@ void VulkanBase::initVulkan() {
     createIndexBuffer();
     createUniformBuffers();
     createLightInfoBuffers();  
+    createToggleInfoBuffers();
 
     createDescriptorPool();
     createDescriptorSets();
@@ -303,6 +308,11 @@ void VulkanBase::keyEvent(int key, int scancode, int action, int mods) {
 }
 
 void VulkanBase::mouseMove(GLFWwindow* window, double xpos, double ypos) {
+    if (ImGui::GetIO().WantCaptureMouse) {
+        return; // Skip camera movement if ImGui is capturing the mouse
+    }
+
+    // Existing camera movement code
     static bool firstMouse = true;
     static float lastX = 800.0f / 2.0;
     static float lastY = 600.0f / 2.0;
@@ -326,6 +336,7 @@ void VulkanBase::mouseMove(GLFWwindow* window, double xpos, double ypos) {
         lastY = ypos;
     }
 }
+
 
 
 void VulkanBase::mouseEvent(GLFWwindow* window, int button, int action, int mods) {
@@ -512,6 +523,7 @@ void VulkanBase::createLogicalDevice() {
     VkPhysicalDeviceFeatures deviceFeatures{};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
     deviceFeatures.sampleRateShading = VK_TRUE; 
+    deviceFeatures.fillModeNonSolid = VK_TRUE; // Enable non-solid fill modes
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -708,25 +720,101 @@ void VulkanBase::recordCommandBuffer(CommandBuffer& commandBuffer, uint32_t imag
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::SetNextWindowPos(ImVec2(0, 0));  // Position the window at the top-left corner
-    ImGui::SetNextWindowSize(ImVec2(300, ImGui::GetIO().DisplaySize.y));  // Set the size of the window
+    ImGui::SetNextWindowPos(ImVec2(0, 0)); 
+    ImGui::SetNextWindowSize(ImVec2(300, ImGui::GetIO().DisplaySize.y)); 
+
+    // Apply overall style
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.2f)); 
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f)); 
+    ImGui::PushStyleColor(ImGuiCol_Tab, ImVec4(0.0f, 0.5f, 0.0f, 0.3f)); 
+    ImGui::PushStyleColor(ImGuiCol_TabHovered, ImVec4(0.0f, 0.8f, 0.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_TabActive, ImVec4(0.0f, 1.0f, 0.0f, 1.0f)); 
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.0f, 0.5f, 0.0f, 1.0f)); 
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.5f, 0.0f, 0.7f)); 
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.0f, 0.8f, 0.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.0f, 1.0f, 0.0f, 1.0f)); 
+    ImGui::PushStyleVar(ImGuiStyleVar_TabRounding, 8.0f); 
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 2.0f); 
 
     ImGui::Begin("Control Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
-    // Checkbox for rotation
-    ImGui::Checkbox("Rotate Object", &rotationEnabled);
-    ImGui::Text("App avg %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    ImGui::Checkbox("Wireframe Mode", &wireframeEnabled);
+    if (ImGui::BeginTabBar("ControlTabs")) {
 
-    // Color picker for background color
-    ///ImGui::ColorEdit3("Background Color", (float*)&backgroundColor);
-    ImGui::ColorPicker3("Background", (float*)&backgroundColor);
-    // End the window
+        // First tab for general controls
+        if (ImGui::BeginTabItem("General")) {
+            ImGui::Spacing();
+
+            ImGui::Text("App avg %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::Spacing();
+
+            ImGui::Separator();
+
+            ImGui::Checkbox("Rotate Object", &rotationEnabled);
+            ImGui::Checkbox("Wireframe Mode", &wireframeEnabled);
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            ImGui::Checkbox("Apply Normal Map", (bool*)&currentToggleInfo.applyNormalMap);
+            ImGui::Checkbox("Apply Metalness Map", (bool*)&currentToggleInfo.applyMetalnessMap);
+            ImGui::Checkbox("Apply Specular Map", (bool*)&currentToggleInfo.applySpecularMap);
+
+            ImGui::Spacing(); 
+            ImGui::Separator(); 
+            ImGui::Spacing();
+
+            ImGui::Checkbox("View Normal Only", (bool*)&currentToggleInfo.viewNormalOnly);
+            ImGui::Checkbox("View Metalness Only", (bool*)&currentToggleInfo.viewMetalnessOnly);
+            ImGui::Checkbox("View Specular Only", (bool*)&currentToggleInfo.viewSpecularOnly);
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            ImGui::TextUnformatted("Background Setting");
+            ImGui::Spacing();
+ 
+            ImGui::ColorPicker3("color", (float*)&backgroundColor);
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+
+            ImGui::EndTabItem();
+        }
+
+        // Second tab for light settings
+        if (ImGui::BeginTabItem("Lighting")) {
+            ImGui::Text("First Light Settings:");
+            ImGui::ColorEdit3("Color1", (float*)&light0Color);
+            ImGui::SliderFloat("Intensity1", &light0Intensity, 0.0f, 20.0f);
+            ImGui::SliderFloat3("Position1", (float*)&light0Position[0], -100.0f, 100.0f);
+
+            ImGui::Separator(); // Separate first and second light settings
+
+            ImGui::Text("Second Light Settings:");
+            ImGui::ColorEdit3("Color2", (float*)&light1Color);
+            ImGui::SliderFloat("Intensity2", &light1Intensity, 0.0f, 20.0f);
+            ImGui::SliderFloat3("Position2", (float*)&light1Position[0], -100.0f, 100.0f);
+
+            ImGui::EndTabItem();
+        }
+
+        ImGui::EndTabBar();
+    }
+
+    ImGui::PopStyleVar(2);  
+    ImGui::PopStyleColor(9);
+
     ImGui::End();
 
-
     ImGui::Render();
+
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(),commandBuffer.getVkCommandBuffer(),0);
+
+    updateToggleInfo(currentFrame, currentToggleInfo);
 
     commandBuffer.endRenderPass();
     commandBuffer.end();
@@ -844,6 +932,57 @@ bool VulkanBase::checkDeviceExtensionSupport(VkPhysicalDevice device) {
     }
 
     return requiredExtensions.empty();
+}
+
+void VulkanBase::createAdditionalTextures() {
+    // Load and create Metalness Texture
+    loadTexture("textures/vehicle_metalness.png", metalnessImage, metalnessImageMemory);
+    metalnessImageView = createImageView(metalnessImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+
+    // Load and create Normal Texture
+    loadTexture("textures/vehicle_normal.png", normalImage, normalImageMemory);
+    normalImageView = createImageView(normalImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+
+    // Load and create Specular Texture
+    loadTexture("textures/vehicle_specular.png", specularImage, specularImageMemory);
+    specularImageView = createImageView(specularImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+
+    // If using a common sampler for these textures:
+    createTextureSampler();
+
+}
+
+
+void VulkanBase::loadTexture(const std::string& filePath, VkImage& textureImage, VkDeviceMemory& textureImageMemory) {
+    int texWidth, texHeight, texChannels;
+    stbi_uc* pixels = stbi_load(filePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    if (!pixels) {
+        throw std::runtime_error("failed to load texture image: " + filePath);
+    }
+
+    VkDeviceSize imageSize = texWidth * texHeight * 4;
+    mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+    void* data;
+    vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
+    memcpy(data, pixels, static_cast<size_t>(imageSize));
+    vkUnmapMemory(device, stagingBufferMemory);
+
+    stbi_image_free(pixels);
+
+    createImage(texWidth, texHeight, mipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+
+    transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
+    copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+    vkDestroyBuffer(device, stagingBuffer, nullptr);
+    vkFreeMemory(device, stagingBufferMemory, nullptr);
+    generateMipmaps(textureImage, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, mipLevels);
 }
 
 void VulkanBase::createTextureImage()
@@ -1051,13 +1190,22 @@ void VulkanBase::createLightInfoBuffers()
 
 void VulkanBase::updateLightInfoBuffer(uint32_t currentImage)
 {
-    LightInfo lightInfo{};
-    lightInfo.lightPos = glm::vec3(2.0f, 4.0f, 2.0f);  // Set your desired light position
-    lightInfo.viewPos = camera.position;  // Set the camera position as the view position
+    LightInfo lightInfo;
 
+    lightInfo.lights[0].position = light0Position;
+    lightInfo.lights[0].color = light0Color;
+    lightInfo.lights[0].intensity = light0Intensity;
+
+    lightInfo.lights[1].position = light1Position;
+    lightInfo.lights[1].color = light1Color;
+    lightInfo.lights[1].intensity = light1Intensity;
+
+    lightInfo.viewPos = camera.getPosition();
+
+    // Update the uniform buffer with this data
     void* data;
-    vkMapMemory(device, lightInfoBuffersMemory[currentImage], 0, sizeof(lightInfo), 0, &data);
-    memcpy(data, &lightInfo, sizeof(lightInfo));
+    vkMapMemory(device, lightInfoBuffersMemory[currentImage], 0, sizeof(LightInfo), 0, &data);
+    memcpy(data, &lightInfo, sizeof(LightInfo));
     vkUnmapMemory(device, lightInfoBuffersMemory[currentImage]);
 
 
@@ -1214,8 +1362,7 @@ void VulkanBase::createUniformBuffers() {
 }
 
 void VulkanBase::createDescriptorSetLayout() {
-
-
+    // UBO for the transformation matrices
     VkDescriptorSetLayoutBinding uboLayoutBinding1{};
     uboLayoutBinding1.binding = 0;
     uboLayoutBinding1.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1223,6 +1370,7 @@ void VulkanBase::createDescriptorSetLayout() {
     uboLayoutBinding1.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
     uboLayoutBinding1.pImmutableSamplers = nullptr;
 
+    // Sampler for the base texture (albedo/diffuse)
     VkDescriptorSetLayoutBinding samplerLayoutBinding{};
     samplerLayoutBinding.binding = 1;
     samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1230,19 +1378,61 @@ void VulkanBase::createDescriptorSetLayout() {
     samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     samplerLayoutBinding.pImmutableSamplers = nullptr;
 
+    // UBO for the light information
     VkDescriptorSetLayoutBinding uboLayoutBinding2{};
-    uboLayoutBinding2.binding = 2;  // Binding index for the LightInfo block
+    uboLayoutBinding2.binding = 2;
     uboLayoutBinding2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     uboLayoutBinding2.descriptorCount = 1;
     uboLayoutBinding2.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     uboLayoutBinding2.pImmutableSamplers = nullptr;
 
-    std::array<VkDescriptorSetLayoutBinding, 3> bindings = { uboLayoutBinding1, samplerLayoutBinding, uboLayoutBinding2 };
+    // Sampler for the metalness texture
+    VkDescriptorSetLayoutBinding metalnessLayoutBinding{};
+    metalnessLayoutBinding.binding = 3;
+    metalnessLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    metalnessLayoutBinding.descriptorCount = 1;
+    metalnessLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    metalnessLayoutBinding.pImmutableSamplers = nullptr;
+
+    // Sampler for the normal texture
+    VkDescriptorSetLayoutBinding normalLayoutBinding{};
+    normalLayoutBinding.binding = 4;
+    normalLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    normalLayoutBinding.descriptorCount = 1;
+    normalLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    normalLayoutBinding.pImmutableSamplers = nullptr;
+
+    // Sampler for the specular texture
+    VkDescriptorSetLayoutBinding specularLayoutBinding{};
+    specularLayoutBinding.binding = 5;
+    specularLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    specularLayoutBinding.descriptorCount = 1;
+    specularLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    specularLayoutBinding.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutBinding toggleInfoLayoutBinding{};
+    toggleInfoLayoutBinding.binding = 6;
+    toggleInfoLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    toggleInfoLayoutBinding.descriptorCount = 1;
+    toggleInfoLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    toggleInfoLayoutBinding.pImmutableSamplers = nullptr;
+
+
+    // Combine all bindings into a single array
+    std::array<VkDescriptorSetLayoutBinding, 7> bindings = {
+        uboLayoutBinding1,
+        samplerLayoutBinding,
+        uboLayoutBinding2,
+        metalnessLayoutBinding,
+        normalLayoutBinding,
+        specularLayoutBinding,
+        toggleInfoLayoutBinding
+    };
+
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     layoutInfo.pBindings = bindings.data();
-
 
     if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create descriptor set layout!");
@@ -1250,11 +1440,28 @@ void VulkanBase::createDescriptorSetLayout() {
 }
 
 
+
 void VulkanBase::createGraphicsPipeline() {
     shader3D = std::make_unique<Shader3D>(device, "shaders/3d_shader.vert.spv", "shaders/3d_shader.frag.spv");
 
     auto bindingDescription = Vertex::getBindingDescription();
-    auto attributeDescriptions = Vertex::getAttributeDescriptions();
+    auto attributeDescriptionsArray = Vertex::getAttributeDescriptions();
+
+    // Convert std::array to std::vector
+    std::vector<VkVertexInputAttributeDescription> attributeDescriptions(
+        attributeDescriptionsArray.begin(), attributeDescriptionsArray.end()
+    );
+
+    // If wireframe mode is enabled, filter out unused attributes
+    if (wireframeEnabled) {
+        attributeDescriptions.erase(
+            std::remove_if(attributeDescriptions.begin(), attributeDescriptions.end(),
+                [](const VkVertexInputAttributeDescription& desc) {
+                    return desc.location >= 3; // Assuming locations 3 and above are not used in wireframe mode
+                }),
+            attributeDescriptions.end());
+    }
+
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -1293,12 +1500,9 @@ void VulkanBase::createGraphicsPipeline() {
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = wireframeEnabled ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
-
     rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
-
-    // THANKS MY BRO XANDER !!!!!!!!!
 
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -1313,7 +1517,6 @@ void VulkanBase::createGraphicsPipeline() {
     depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.stencilTestEnable = VK_FALSE;
-
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment{};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -1367,13 +1570,38 @@ void VulkanBase::createGraphicsPipeline() {
 
 void VulkanBase::updatePipelineIfNeeded() {
     if (currentWireframeState != wireframeEnabled) {
-        // Pipeline needs to be recreated
+        vkDeviceWaitIdle(device);
         vkDestroyPipeline(device, graphicsPipeline, nullptr);
         createGraphicsPipeline(); 
         currentWireframeState = wireframeEnabled;
     }
 }
 
+void VulkanBase::createToggleInfoBuffers()
+{
+    VkDeviceSize bufferSize = sizeof(ToggleInfo);
+
+    toggleInfoBuffers.resize(swapChainManager->getSwapChainImages().size());
+    toggleInfoBuffersMemory.resize(swapChainManager->getSwapChainImages().size());
+
+    for (size_t i = 0; i < toggleInfoBuffers.size(); i++) {
+        createBuffer(bufferSize,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            toggleInfoBuffers[i], toggleInfoBuffersMemory[i]);
+    }
+
+}
+
+void VulkanBase::updateToggleInfo(uint32_t currentImage, const ToggleInfo& toggleInfo)
+{
+    void* data;
+    vkMapMemory(device, toggleInfoBuffersMemory[currentImage], 0, sizeof(ToggleInfo), 0, &data);
+    memcpy(data, &toggleInfo, sizeof(ToggleInfo));
+    vkUnmapMemory(device, toggleInfoBuffersMemory[currentImage]);
+
+
+}
 
 
 
@@ -1487,7 +1715,6 @@ void VulkanBase::createDescriptorSets() {
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UBO);
 
-        // Ensure that lightInfoBuffers are correctly initialized
         if (i >= lightInfoBuffers.size()) {
             throw std::runtime_error("lightInfoBuffers is out of range!");
         }
@@ -1497,12 +1724,52 @@ void VulkanBase::createDescriptorSets() {
         lightInfoBufferInfo.offset = 0;
         lightInfoBufferInfo.range = sizeof(LightInfo);
 
-        VkDescriptorImageInfo imageInfo{};
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = textureImageView;
-        imageInfo.sampler = textureSampler;
+        VkDescriptorImageInfo baseImageInfo{};
+        baseImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        baseImageInfo.imageView = textureImageView;
+        baseImageInfo.sampler = textureSampler;
 
-        std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
+        // ImageInfo for Metalness Texture
+        VkDescriptorImageInfo metalnessImageInfo{};
+        metalnessImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        metalnessImageInfo.imageView = metalnessImageView;
+        metalnessImageInfo.sampler = textureSampler;
+
+        // ImageInfo for Normal Texture
+        VkDescriptorImageInfo normalImageInfo{};
+        normalImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        normalImageInfo.imageView = normalImageView;
+        normalImageInfo.sampler = textureSampler;
+
+        // ImageInfo for Specular Texture
+        VkDescriptorImageInfo specularImageInfo{};
+        specularImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        specularImageInfo.imageView = specularImageView;
+        specularImageInfo.sampler = textureSampler;
+
+
+        if (i >= toggleInfoBuffers.size()) {
+            throw std::runtime_error("toggleInfoBuffers is out of range!");
+        }
+
+        if (!swapChainManager) {
+            throw std::runtime_error("swapChainManager is not initialized!");
+        }
+
+        auto swapChainImagesSize = swapChainManager->getSwapChainImages().size();
+        if (swapChainImagesSize == 0) {
+            throw std::runtime_error("swapChainImages has no elements!");
+        }
+
+        toggleInfoBuffers.resize(swapChainImagesSize);
+
+        VkDescriptorBufferInfo toggleInfoBufferInfo{};
+        toggleInfoBufferInfo.buffer = toggleInfoBuffers[i];
+        toggleInfoBufferInfo.offset = 0;
+        toggleInfoBufferInfo.range = sizeof(ToggleInfo);
+
+
+        std::array<VkWriteDescriptorSet, 7> descriptorWrites{};
 
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[0].dstSet = descriptorSets[i];
@@ -1518,7 +1785,7 @@ void VulkanBase::createDescriptorSets() {
         descriptorWrites[1].dstArrayElement = 0;
         descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         descriptorWrites[1].descriptorCount = 1;
-        descriptorWrites[1].pImageInfo = &imageInfo;
+        descriptorWrites[1].pImageInfo = &baseImageInfo;
 
         descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[2].dstSet = descriptorSets[i];
@@ -1528,11 +1795,44 @@ void VulkanBase::createDescriptorSets() {
         descriptorWrites[2].descriptorCount = 1;
         descriptorWrites[2].pBufferInfo = &lightInfoBufferInfo;
 
+        descriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[3].dstSet = descriptorSets[i];
+        descriptorWrites[3].dstBinding = 3;  // Binding index for Metalness texture
+        descriptorWrites[3].dstArrayElement = 0;
+        descriptorWrites[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[3].descriptorCount = 1;
+        descriptorWrites[3].pImageInfo = &metalnessImageInfo;
+
+        descriptorWrites[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[4].dstSet = descriptorSets[i];
+        descriptorWrites[4].dstBinding = 4;  // Binding index for Normal texture
+        descriptorWrites[4].dstArrayElement = 0;
+        descriptorWrites[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[4].descriptorCount = 1;
+        descriptorWrites[4].pImageInfo = &normalImageInfo;
+
+        descriptorWrites[5].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[5].dstSet = descriptorSets[i];
+        descriptorWrites[5].dstBinding = 5;  // Binding index for Specular texture
+        descriptorWrites[5].dstArrayElement = 0;
+        descriptorWrites[5].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[5].descriptorCount = 1;
+        descriptorWrites[5].pImageInfo = &specularImageInfo;
+
+        descriptorWrites[6].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[6].dstSet = descriptorSets[i]; 
+        descriptorWrites[6].dstBinding = 6;  // Binding index for ToggleInfo
+        descriptorWrites[6].dstArrayElement = 0;
+        descriptorWrites[6].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrites[6].descriptorCount = 1;
+        descriptorWrites[6].pBufferInfo = &toggleInfoBufferInfo;
+
+
+
         vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
-
-
 }
+
 
 
 
@@ -1610,6 +1910,11 @@ void VulkanBase::drawFrame() {
 
     // Update the uniform buffer with the latest transformation matrices
     updateUniformBuffer(imageIndex);
+
+    updateLightInfoBuffer(imageIndex);
+    updateToggleInfo(imageIndex, currentToggleInfo);
+
+
     recordCommandBuffer(commandBuffers[imageIndex], imageIndex);
 
 
@@ -1660,13 +1965,25 @@ void VulkanBase::drawFrame() {
 
 
 void VulkanBase::updateUniformBuffer(uint32_t currentImage) {
+    static float rotationAngle = 0.0f;  // Track the current rotation angle
+    static float lastFrameTime = glfwGetTime();  // Track the time of the last frame
+
     UBO ubo{};
+
+    float currentFrameTime = glfwGetTime();
+    float deltaTime = currentFrameTime - lastFrameTime;  // Time between current frame and the last frame
+
     if (rotationEnabled) {
-        ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f) * static_cast<float>(glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f));  // Rotate over time
+        // Increment the rotation angle based on the delta time and desired speed
+        rotationAngle += glm::radians(45.0f) * deltaTime;
     }
-    else {
-        ubo.model = glm::mat4(1.0f);  // No rotation, just identity matrix
-    }
+
+    // Update last frame time
+    lastFrameTime = currentFrameTime;
+
+    // Apply the rotation to the model matrix
+    ubo.model = glm::rotate(glm::mat4(1.0f), rotationAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+
     ubo.view = camera.getViewMatrix();
     ubo.proj = glm::perspective(glm::radians(camera.zoom),
         swapChainManager->getSwapChainExtent().width / static_cast<float>(swapChainManager->getSwapChainExtent().height),
@@ -1682,6 +1999,7 @@ void VulkanBase::updateUniformBuffer(uint32_t currentImage) {
     memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(device, uniformBuffersMemory[currentImage]);
 }
+
 
 
 void VulkanBase::printMatrix(const glm::mat4& mat, const std::string& name) {
@@ -1709,14 +2027,16 @@ void VulkanBase::processInput(float deltaTime) {
             camera.processKeyboard(GLFW_KEY_Q, deltaTime);
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)  // Move down
             camera.processKeyboard(GLFW_KEY_E, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS && !rKeyPressed) {
-            rotationEnabled = !rotationEnabled;  // Toggle the rotation flag
-            rKeyPressed = true;
-        }
-        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_RELEASE) {
-            rKeyPressed = false;  // Reset the flag when the key is released
-        }
 
 
+
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS && !rKeyPressed) {
+        rotationEnabled = !rotationEnabled; 
+        rKeyPressed = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_RELEASE) {
+        rKeyPressed = false; 
     }
 }

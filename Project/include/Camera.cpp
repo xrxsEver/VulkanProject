@@ -7,7 +7,7 @@ const float SENSITIVITY = 0.1f;
 const float ZOOM = 45.0f;
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
-    : front(glm::vec3(0.0f, 0.0f, -1.0f)), movementSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoom(ZOOM)
+    : front(glm::vec3(0.0f, 0.0f, -1.0f)), movementSpeed(SPEED), mouseSensitivity(SENSITIVITY * 0.5f), zoom(ZOOM)
 {
     this->position = position;
     this->worldUp = up;
@@ -54,9 +54,22 @@ void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPi
 }
 
 void Camera::processMouseScroll(float yoffset) {
-    movementSpeed += yoffset;
-    if (movementSpeed < 0.1f) {
-        movementSpeed = 0.1f;  // Prevent negative or zero speed
+    float scrollSensitivity = 0.05f;
+    float maxSpeed = 0.4f;  
+    float minSpeed = 0.004f;
+
+    if (yoffset > 0) {
+        movementSpeed *= (1.0f + scrollSensitivity);
+    }
+    else if (yoffset < 0) {
+        movementSpeed *= (1.0f - scrollSensitivity);
+    }
+
+    if (movementSpeed > maxSpeed) {
+        movementSpeed = maxSpeed;
+    }
+    else if (movementSpeed < minSpeed) {
+        movementSpeed = minSpeed;
     }
 }
 

@@ -12,6 +12,8 @@ public:
     void processMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
     void processMouseScroll(float yoffset);
 
+    glm::vec3 getPosition() const { return position; }
+
     glm::vec3 position;
     glm::vec3 front;
     glm::vec3 up;

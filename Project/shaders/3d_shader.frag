@@ -1,38 +1,79 @@
 #version 450
 
-layout(binding = 1) uniform sampler2D texSampler;
-
 layout(location = 0) in vec3 fragNormal;
-layout(location = 1) in vec3 fragPosition;
-layout(location = 2) in vec3 fragColor;
-layout(location = 3) in vec2 fragTexCoord;
+layout(location = 1) in vec2 fragTexCoord;
+layout(location = 2) in vec3 fragPosition;
 
-layout(location = 0) out vec4 outColor;
+layout(location = 0) out vec4 FragColor;
 
-// Declare uniforms inside a uniform block
+layout(binding = 1) uniform sampler2D baseTexture;
+layout(binding = 3) uniform sampler2D metalnessTexture;
+layout(binding = 4) uniform sampler2D normalTexture;
+layout(binding = 5) uniform sampler2D specularTexture;
+
+#define MAX_LIGHTS 2
+
+struct Light {
+    vec3 position;
+    vec3 color;
+    float intensity;
+};
+
 layout(binding = 2) uniform LightInfo {
-    vec3 lightPos;
+    Light lights[MAX_LIGHTS];
     vec3 viewPos;
 } lightInfo;
 
+layout(binding = 6) uniform ToggleInfo {
+    bool applyNormalMap;
+    bool applyMetalnessMap;
+    bool applySpecularMap;
+    bool viewNormalOnly;
+    bool viewMetalnessOnly;
+    bool viewSpecularOnly;
+} toggleInfo;
+
 void main() {
-    // Ambient lighting
-    float ambientStrength = 5;
-    vec3 ambient = ambientStrength * vec3(1.0, 1.0, 1.0);
-    
-    // Diffuse lighting
+    vec3 baseColor = texture(baseTexture, fragTexCoord).rgb;
+    vec3 normalMapColor = texture(normalTexture, fragTexCoord).rgb;
+    vec3 metalnessMapColor = texture(metalnessTexture, fragTexCoord).rgb;
+    vec3 specularMapColor = texture(specularTexture, fragTexCoord).rgb;
+
+    vec3 finalColor = vec3(0.0);
+
     vec3 norm = normalize(fragNormal);
-    vec3 lightDir = normalize(lightInfo.lightPos - fragPosition);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * vec3(1.0, 1.0, 1.0);
-    
-    // Specular lighting
-    float specularStrength = 0.9;
+    if (toggleInfo.applyNormalMap) {
+        norm = normalize(normalMapColor * 2.0 - 1.0);
+    }
+
     vec3 viewDir = normalize(lightInfo.viewPos - fragPosition);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-    vec3 specular = specularStrength * spec * vec3(1.0, 1.0, 1.0);
-    
-    vec3 result = (ambient + diffuse + specular) * fragColor;
-    outColor = vec4(result * texture(texSampler, fragTexCoord).rgb, 1.0);
+
+    for (int i = 0; i < MAX_LIGHTS; i++) {
+        vec3 lightDir = normalize(lightInfo.lights[i].position - fragPosition);
+        float diff = max(dot(norm, lightDir), 0.0);
+        vec3 diffuse = diff * baseColor * lightInfo.lights[i].color * lightInfo.lights[i].intensity;
+
+        vec3 reflectDir = reflect(-lightDir, norm);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 4.0);
+        vec3 specular = spec * vec3(1.0) * lightInfo.lights[i].color * lightInfo.lights[i].intensity;
+
+        if (toggleInfo.applyMetalnessMap) {
+            diffuse *= metalnessMapColor;
+        }
+        if (toggleInfo.applySpecularMap) {
+            specular *= specularMapColor;
+        }
+
+        finalColor += diffuse + specular;
+    }
+
+    if (toggleInfo.viewNormalOnly) {
+        finalColor = norm * 0.5 + 0.5;
+    } else if (toggleInfo.viewMetalnessOnly) {
+        finalColor = metalnessMapColor;
+    } else if (toggleInfo.viewSpecularOnly) {
+        finalColor = specularMapColor;
+    }
+
+    FragColor = vec4(finalColor, 1.0);
 }

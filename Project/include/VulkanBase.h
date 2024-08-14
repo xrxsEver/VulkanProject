@@ -155,7 +155,7 @@ private:
     VkDeviceMemory textureImageMemory;
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void createTextureImageView();
-
+    void loadTexture(const std::string& filePath, VkImage& textureImage, VkDeviceMemory& textureImageMemory);
     VkImageView textureImageView;
     VkSampler textureSampler;
     VkSamplerCreateInfo samplerInfo;
@@ -169,6 +169,24 @@ private:
     VkFormat findDepthFormat();
     VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
     bool hasStencilComponent(VkFormat format);
+
+
+    VkImage metalnessImage;
+    VkDeviceMemory metalnessImageMemory;
+    VkImageView metalnessImageView;
+
+    // Normal texture
+    VkImage normalImage;
+    VkDeviceMemory normalImageMemory;
+    VkImageView normalImageView;
+
+    // Specular texture
+    VkImage specularImage;
+    VkDeviceMemory specularImageMemory;
+    VkImageView specularImageView;
+
+    void createAdditionalTextures();
+
 
     uint32_t mipLevels;
     void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
@@ -190,9 +208,30 @@ private:
     void updateLightInfoBuffer(uint32_t currentImage);
     bool rotationEnabled = false;
     bool rKeyPressed = false;
-    ImVec4 backgroundColor = ImVec4(0.5f, 0.2f, 0.2f, 1.0f);  // Initial background color for ImGui
+    ImVec4 backgroundColor = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);  // Initial background color for ImGui
     VkClearValue clearColor;  // Clear value used by Vulkan
     bool wireframeEnabled = false;
     bool currentWireframeState = false;  // Store the last known wireframe state
     void updatePipelineIfNeeded();
+
+
+    //toggleInfo
+    std::vector<VkBuffer> toggleInfoBuffers;
+    std::vector<VkDeviceMemory> toggleInfoBuffersMemory;
+    void createToggleInfoBuffers();
+    void updateToggleInfo(uint32_t currentImage, const ToggleInfo& toggleInfo);
+
+    ToggleInfo currentToggleInfo;
+
+    //light setup
+
+    glm::vec3 light0Color = glm::vec3(1.0f, 0.6f, 0.2f); // Yellow light default color
+    float light0Intensity = 2.5f;
+
+    glm::vec3 light1Color = glm::vec3(1.0f, 1.0f, 1.0f); // White light default color
+    float light1Intensity = 3.0f;
+
+    glm::vec3 light0Position = glm::vec3(0.0f, 0.0f, 30.0f); // Yellow light position
+    glm::vec3 light1Position = glm::vec3(10.0f, 40.0f, 0.0f); // White light position
+
 };
