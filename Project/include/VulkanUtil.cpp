@@ -21,7 +21,7 @@ namespace VkUtils {
         }
     }
     std::vector<char> VkUtils::readFile(const std::string& filename) {
-        std::cout << "Attempting to open file: " << filename << std::endl;
+       // std::cout << "Attempting to open file: " << filename << std::endl;
         std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
         if (!file.is_open()) {
@@ -45,7 +45,7 @@ namespace VkUtils {
         // Query the number of queue families
         uint32_t queueFamilyCount = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-        std::cout << "Number of Queue Families: " << queueFamilyCount << std::endl;
+        // std::cout << "Number of Queue Families: " << queueFamilyCount << std::endl;
 
         // Retrieve properties of each queue family
         std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
@@ -60,7 +60,7 @@ namespace VkUtils {
 
             VkBool32 presentSupport = false;
             vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-            std::cout << "Queue Family " << i << " Present Support: " << (presentSupport ? "Supported" : "Not Supported") << std::endl;
+           // std::cout << "Queue Family " << i << " Present Support: " << (presentSupport ? "Supported" : "Not Supported") << std::endl;
 
             if (presentSupport) {
                 indices.presentFamily = i;
@@ -98,20 +98,20 @@ namespace VkUtils {
         }
 
         // Debugging information
-        std::cout << "Capabilities: \n";
-        std::cout << "  minImageCount: " << details.capabilities.minImageCount << "\n";
-        std::cout << "  maxImageCount: " << details.capabilities.maxImageCount << "\n";
-        std::cout << "  currentExtent: (" << details.capabilities.currentExtent.width << ", " << details.capabilities.currentExtent.height << ")\n";
+      // std::cout << "Capabilities: \n";
+      // std::cout << "  minImageCount: " << details.capabilities.minImageCount << "\n";
+      // std::cout << "  maxImageCount: " << details.capabilities.maxImageCount << "\n";
+      // std::cout << "  currentExtent: (" << details.capabilities.currentExtent.width << ", " << details.capabilities.currentExtent.height << ")\n";
 
-        std::cout << "Formats: \n";
-        for (const auto& format : details.formats) {
-            std::cout << "  format: " << format.format << ", colorSpace: " << format.colorSpace << "\n";
-        }
-
-        std::cout << "Present Modes: \n";
-        for (const auto& presentMode : details.presentModes) {
-            std::cout << "  presentMode: " << presentMode << "\n";
-        }
+    //   std::cout << "Formats: \n";
+    //   for (const auto& format : details.formats) {
+    //       std::cout << "  format: " << format.format << ", colorSpace: " << format.colorSpace << "\n";
+    //   }
+    // 
+    //   std::cout << "Present Modes: \n";
+    //   for (const auto& presentMode : details.presentModes) {
+    //       std::cout << "  presentMode: " << presentMode << "\n";
+    //   }
 
         return details;
     }

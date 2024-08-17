@@ -46,7 +46,7 @@ const std::vector<const char*> VulkanBase::deviceExtensions = {
 
 VulkanBase::VulkanBase()
     : camera(glm::vec3(0.0f, 1.5f, 55.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f) ,
-    currentToggleInfo({ VK_FALSE, VK_TRUE, VK_TRUE, VK_FALSE, VK_FALSE, VK_FALSE }) {  // Initialize ToggleInfo to default values
+    currentToggleInfo({ VK_TRUE, VK_TRUE, VK_TRUE, VK_FALSE ,VK_FALSE,VK_FALSE,VK_FALSE }) {  // Initialize ToggleInfo to default values
     initWindow();
     initVulkan();
     initImGui();
@@ -64,7 +64,7 @@ void VulkanBase::run() {
 void VulkanBase::initWindow() {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    window = glfwCreateWindow(VkUtils::WIDTH, VkUtils::HEIGHT, "Vulkan Window", nullptr, nullptr);
+    window = glfwCreateWindow(VkUtils::WIDTH, VkUtils::HEIGHT, "XeRender", nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
     glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
         auto app = reinterpret_cast<VulkanBase*>(glfwGetWindowUserPointer(window));
@@ -84,6 +84,9 @@ void VulkanBase::initWindow() {
         auto app = reinterpret_cast<VulkanBase*>(glfwGetWindowUserPointer(window));
         app->mouseScroll(window, xoffset, yoffset);
         });
+
+    glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+
 }
 
 
@@ -111,9 +114,24 @@ void VulkanBase::initVulkan() {
 
     createTextureSampler();
 
-    loadModel();  
-    createVertexBuffer();
-    createIndexBuffer();
+    sceneObjects = ModelLoader::loadSceneFromJson("res/scene.json");
+
+     // Aggregate the vertex and index data from all SceneObjects
+     uint32_t indexOffset = 0;
+     for (const auto& obj : sceneObjects) {
+         vertices.insert(vertices.end(), obj.vertices.begin(), obj.vertices.end());
+
+         for (const auto& index : obj.indices) {
+             indices.push_back(index + indexOffset);
+         }
+
+         indexOffset += static_cast<uint32_t>(obj.vertices.size());
+     }
+
+     loadModel();
+
+   
+   
     createUniformBuffers();
     createLightInfoBuffers();  
     createToggleInfoBuffers();
@@ -490,19 +508,42 @@ void VulkanBase::pickPhysicalDevice() {
     std::vector<VkPhysicalDevice> devices(deviceCount);
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
-    for (const auto& device : devices) {
-        if (isDeviceSuitable(device)) {
-            physicalDevice = device;
-            msaaSamples = getMaxUsableSampleCount();
+    VkPhysicalDevice selectedDevice = VK_NULL_HANDLE;
+    int highestScore = 0;
 
-            break;
+    for (const auto& device : devices) {
+        VkPhysicalDeviceProperties deviceProperties;
+        vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+        // Check if the device is an NVIDIA RTX GPU
+        bool isNvidiaRTX = (std::string(deviceProperties.deviceName).find("NVIDIA") != std::string::npos) &&
+            (std::string(deviceProperties.deviceName).find("RTX") != std::string::npos);
+
+        if (isNvidiaRTX && isDeviceSuitable(device)) {
+            selectedDevice = device;
+            break;  // Since we found an RTX, we can stop searching
         }
     }
 
-    if (physicalDevice == VK_NULL_HANDLE) {
+    // Fallback: If no NVIDIA RTX device was found, pick the first suitable device
+    if (selectedDevice == VK_NULL_HANDLE) {
+        for (const auto& device : devices) {
+            if (isDeviceSuitable(device)) {
+                selectedDevice = device;
+                break;
+            }
+        }
+    }
+
+    if (selectedDevice == VK_NULL_HANDLE) {
         throw std::runtime_error("failed to find a suitable GPU!");
     }
+
+    physicalDevice = selectedDevice;
+    msaaSamples = getMaxUsableSampleCount();
 }
+
+
 
 void VulkanBase::createLogicalDevice() {
     VkUtils::QueueFamilyIndices indices = VkUtils::FindQueueFamilies(physicalDevice, surface);
@@ -540,6 +581,12 @@ void VulkanBase::createLogicalDevice() {
     vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
     vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 }
+
+void VulkanBase::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+    auto app = reinterpret_cast<VulkanBase*>(glfwGetWindowUserPointer(window));
+    app->framebufferResized = true;
+}
+
 
 void VulkanBase::createFrameBuffers() {
     swapChainFramebuffers.resize(swapChainManager->getSwapChainImageViews().size());
@@ -580,44 +627,42 @@ void printCurrentWorkingDirectory() {
 }
 
 void VulkanBase::loadModel() {
-    printCurrentWorkingDirectory();
+   // printCurrentWorkingDirectory();
 
+    std::string modelPath = "Res/Castle.obj";
+    std::filesystem::path fullPath = std::filesystem::absolute(modelPath);
 
- //      vertices = {
- //      {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
- //      {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
- //      {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
- //      {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
- //     
- //      {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
- //      {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
- //      {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
- //      {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
- //     
- //      };
- //     
- //      indices = { 0, 1, 2, 2, 3, 0,
- //      4, 5, 6, 6, 7, 4
- //      };
+   // std::cout << "Attempting to load model from path: " << fullPath << std::endl;  //uncomment to see the path its trying to load
 
+    if (!std::filesystem::exists(fullPath)) {
+        throw std::runtime_error("Model file does not exist: " + fullPath.string());
+    }
 
-     std::string modelPath = "Res/Castle.obj";
-     std::filesystem::path fullPath = std::filesystem::absolute(modelPath);
-     std::cout << "Attempting to load model from path: " << fullPath << std::endl;
-    
-     if (!std::filesystem::exists(fullPath)) {
-         throw std::runtime_error("Model file does not exist: " + fullPath.string());
-     }
-    
+    SceneObject modelObject;
 
-     if (!ModelLoader::loadOBJ(modelPath, vertices, indices)) {
-         throw std::runtime_error("Failed to load model!");
-     }
+    if (!ModelLoader::loadOBJ(modelPath, modelObject.vertices, modelObject.indices)) {
+        throw std::runtime_error("Failed to load model!");
+    }
+
+    sceneObjects.push_back(modelObject);  // Store the model as a SceneObject
+
+    // Aggregate the vertex and index data
+    uint32_t indexOffset = static_cast<uint32_t>(vertices.size());
+
+    vertices.insert(vertices.end(), modelObject.vertices.begin(), modelObject.vertices.end());
+
+    for (const auto& index : modelObject.indices) {
+        indices.push_back(index + indexOffset);
+    }
+
+    createVertexBuffer();
+    createIndexBuffer();
 }
 
 
+
 void VulkanBase::createVertexBuffer() {
-    std::cout << "Creating vertex buffer..." << std::endl;
+    //std::cout << "Creating vertex buffer..." << std::endl;
     VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
     VkBuffer stagingBuffer;
@@ -642,11 +687,11 @@ void VulkanBase::createVertexBuffer() {
     vkDestroyBuffer(device, stagingBuffer, nullptr);
     vkFreeMemory(device, stagingBufferMemory, nullptr);
 
-    std::cout << "Vertex buffer created: " << vertexBuffer << std::endl;
+    //std::cout << "Vertex buffer created: " << vertexBuffer << std::endl;
 }
 
 void VulkanBase::createIndexBuffer() {
-    std::cout << "Creating index buffer..." << std::endl;
+   // std::cout << "Creating index buffer..." << std::endl;
     VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
     VkBuffer stagingBuffer;
@@ -671,7 +716,7 @@ void VulkanBase::createIndexBuffer() {
     vkDestroyBuffer(device, stagingBuffer, nullptr);
     vkFreeMemory(device, stagingBufferMemory, nullptr);
 
-    std::cout << "Index buffer created: " << indexBuffer << std::endl;
+    //std::cout << "Index buffer created: " << indexBuffer << std::endl;
 }
 
 void VulkanBase::recordCommandBuffer(CommandBuffer& commandBuffer, uint32_t imageIndex) {
@@ -736,7 +781,7 @@ void VulkanBase::recordCommandBuffer(CommandBuffer& commandBuffer, uint32_t imag
     ImGui::PushStyleVar(ImGuiStyleVar_TabRounding, 8.0f); 
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 2.0f); 
 
-    ImGui::Begin("Control Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+    ImGui::Begin("Control Panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 
     if (ImGui::BeginTabBar("ControlTabs")) {
 
@@ -765,8 +810,8 @@ void VulkanBase::recordCommandBuffer(CommandBuffer& commandBuffer, uint32_t imag
             ImGui::Spacing();
 
             ImGui::Checkbox("View Normal Only", (bool*)&currentToggleInfo.viewNormalOnly);
-            ImGui::Checkbox("View Metalness Only", (bool*)&currentToggleInfo.viewMetalnessOnly);
-            ImGui::Checkbox("View Specular Only", (bool*)&currentToggleInfo.viewSpecularOnly);
+            ImGui::Checkbox("View Metal Only", (bool*)&currentToggleInfo.viewMetalnessOnly);
+            ImGui::Checkbox("View spec Only", (bool*)&currentToggleInfo.viewSpecularOnly);
 
             ImGui::Spacing();
             ImGui::Separator();
@@ -785,19 +830,63 @@ void VulkanBase::recordCommandBuffer(CommandBuffer& commandBuffer, uint32_t imag
             ImGui::EndTabItem();
         }
 
-        // Second tab for light settings
+
         if (ImGui::BeginTabItem("Lighting")) {
+            // First Light Settings
             ImGui::Text("First Light Settings:");
             ImGui::ColorEdit3("Color1", (float*)&light0Color);
             ImGui::SliderFloat("Intensity1", &light0Intensity, 0.0f, 20.0f);
             ImGui::SliderFloat3("Position1", (float*)&light0Position[0], -100.0f, 100.0f);
 
-            ImGui::Separator(); // Separate first and second light settings
+            ImGui::Separator(); 
 
+            // Second Light Settings
             ImGui::Text("Second Light Settings:");
             ImGui::ColorEdit3("Color2", (float*)&light1Color);
             ImGui::SliderFloat("Intensity2", &light1Intensity, 0.0f, 20.0f);
             ImGui::SliderFloat3("Position2", (float*)&light1Position[0], -100.0f, 100.0f);
+
+            ImGui::Separator(); 
+
+            // Ambient Light Settings
+            ImGui::Text("Ambient Light Settings:");
+            ImGui::ColorEdit3("Ambient Color", (float*)&ambientColor);
+            ImGui::SliderFloat("Ambient Intensity", &ambientIntensity, 0.0f, 20.0f);
+
+            ImGui::Separator(); 
+
+            ImGui::Checkbox("View RimLight", (bool*)&currentToggleInfo.RimLight);
+
+            ImGui::EndTabItem();
+        }
+
+        // New tab for controls and info
+        if (ImGui::BeginTabItem("Controls & Info")) {
+            ImGui::Spacing();
+            ImGui::Text("How to Move:");
+            ImGui::BulletText("Hold LMB");
+            ImGui::BulletText("W A S D to move");
+            ImGui::BulletText("Q to go up");
+            ImGui::BulletText("E to go down");
+            ImGui::BulletText("Mouse Look around");
+            ImGui::BulletText("Scroll-> movement Speed");
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            ImGui::Text("Mouse Settings:");
+            ImGui::SliderFloat("Mouse Sens", &camera.mouseSensitivity, 0.025f, 1.5f);
+            ImGui::SliderFloat("Move Speed", &camera.movementSpeed, 0.001f, 0.050f);
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            ImGui::Text("Camera Info:");
+            glm::vec3 camPos = camera.getPosition();
+            ImGui::Text("Position: (%.2f, %.2f, %.2f)", camPos.x, camPos.y, camPos.z);
+            ImGui::Text("Rotation: Yaw = %.2f, Pitch = %.2f", camera.yaw, camera.pitch);
 
             ImGui::EndTabItem();
         }
@@ -850,16 +939,21 @@ void VulkanBase::recreateSwapChain() {
         glfwWaitEvents();
     }
 
-    vkDeviceWaitIdle(device);
+    vkDeviceWaitIdle(device);  
 
-    swapChainManager->cleanupSwapChain();
+    swapChainManager->cleanupSwapChain();  
+
     swapChainManager->createSwapChain();
     swapChainManager->createImageViews();
-    createColorResources();
-    createDepthResources();
-    createFrameBuffers();
+    createColorResources();  
+    createDepthResources();  
+    createFrameBuffers();    
+
+    createGraphicsPipeline();
+
     createCommandBuffers();
 }
+
 
 bool VulkanBase::checkValidationLayerSupport() {
     uint32_t layerCount;
@@ -887,23 +981,38 @@ bool VulkanBase::checkValidationLayerSupport() {
 }
 
 bool VulkanBase::isDeviceSuitable(VkPhysicalDevice device) {
+    // Retrieve the properties and features of the device
     VkPhysicalDeviceProperties deviceProperties;
     VkPhysicalDeviceFeatures deviceFeatures;
     vkGetPhysicalDeviceProperties(device, &deviceProperties);
     vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
+    // Retrieve the queue family indices for graphics and presentation
     VkUtils::QueueFamilyIndices indices = VkUtils::FindQueueFamilies(device, surface);
 
+    // Check if the required device extensions are supported
     bool extensionsSupported = checkDeviceExtensionSupport(device);
 
+    // Verify if the swap chain is adequate (non-empty formats and present modes)
     bool swapChainAdequate = false;
     if (extensionsSupported) {
         VkUtils::SwapChainSupportDetails swapChainSupport = VkUtils::QuerySwapChainSupport(device, surface);
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
     }
 
+    // Log details for diagnostics
+  // std::cout << "Checking device: " << deviceProperties.deviceName << std::endl;
+  // std::cout << "  Device Type: " << deviceProperties.deviceType << std::endl;
+  // std::cout << "  API Version: " << deviceProperties.apiVersion << std::endl;
+  // std::cout << "  Extensions Supported: " << (extensionsSupported ? "Yes" : "No") << std::endl;
+  // std::cout << "  Swap Chain Adequate: " << (swapChainAdequate ? "Yes" : "No") << std::endl;
+  // std::cout << "  Queue Families Complete: " << (indices.isComplete() ? "Yes" : "No") << std::endl;
+  // std::cout << "  Anisotropy Support: " << (deviceFeatures.samplerAnisotropy ? "Yes" : "No") << std::endl;
+
+    // Return true if the device is suitable for use
     return indices.isComplete() && extensionsSupported && swapChainAdequate && deviceFeatures.samplerAnisotropy;
 }
+
 
 std::vector<const char*> VulkanBase::getRequiredExtensions() {
     uint32_t glfwExtensionCount = 0;
@@ -1192,14 +1301,21 @@ void VulkanBase::updateLightInfoBuffer(uint32_t currentImage)
 {
     LightInfo lightInfo;
 
+    // Update light 1
     lightInfo.lights[0].position = light0Position;
     lightInfo.lights[0].color = light0Color;
     lightInfo.lights[0].intensity = light0Intensity;
 
+    // Update light 2
     lightInfo.lights[1].position = light1Position;
     lightInfo.lights[1].color = light1Color;
     lightInfo.lights[1].intensity = light1Intensity;
 
+    // Set ambient light properties
+    lightInfo.ambientColor = ambientColor;
+    lightInfo.ambientIntensity = ambientIntensity;
+
+    // Update the camera/view position
     lightInfo.viewPos = camera.getPosition();
 
     // Update the uniform buffer with this data
@@ -1207,9 +1323,8 @@ void VulkanBase::updateLightInfoBuffer(uint32_t currentImage)
     vkMapMemory(device, lightInfoBuffersMemory[currentImage], 0, sizeof(LightInfo), 0, &data);
     memcpy(data, &lightInfo, sizeof(LightInfo));
     vkUnmapMemory(device, lightInfoBuffersMemory[currentImage]);
-
-
 }
+
 
 
 void VulkanBase::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
@@ -1309,10 +1424,6 @@ VkFormat VulkanBase::findDepthFormat() {
     );
 }
 
-void VulkanBase::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-    auto app = reinterpret_cast<VulkanBase*>(glfwGetWindowUserPointer(window));
-    app->framebufferResized = true;
-}
 
 
 
@@ -1339,7 +1450,7 @@ void VulkanBase::createSyncObjects() {
 
 void VulkanBase::createCommandBuffers() {
     commandBuffers.resize(swapChainFramebuffers.size());
-    std::cout << "Resized commandBuffers to " << commandBuffers.size() << std::endl;
+   // std::cout << "Resized commandBuffers to " << commandBuffers.size() << std::endl; //uncommnet to see the command buffer size 
 
     for (size_t i = 0; i < commandBuffers.size(); i++) {
         commandBuffers[i].initialize(device, commandPool.getVkCommandPool());
@@ -1601,6 +1712,31 @@ void VulkanBase::updateToggleInfo(uint32_t currentImage, const ToggleInfo& toggl
     vkUnmapMemory(device, toggleInfoBuffersMemory[currentImage]);
 
 
+}
+
+void VulkanBase::loadSceneFromJson(const std::string& sceneFilePath)
+{
+    // Load the scene objects from the JSON file
+    std::vector<SceneObject> sceneObjects = ModelLoader::loadSceneFromJson(sceneFilePath);
+
+    uint32_t indexOffset = static_cast<uint32_t>(vertices.size()); // Offset for indices
+
+    for (const auto& obj : sceneObjects) {
+        // Append the object's vertices to the main vertices vector
+        vertices.insert(vertices.end(), obj.vertices.begin(), obj.vertices.end());
+
+        // Append the object's indices to the main indices vector with the offset applied
+        for (const auto& index : obj.indices) {
+            indices.push_back(index + indexOffset);
+        }
+
+        // Update the index offset for the next object
+        indexOffset += static_cast<uint32_t>(obj.vertices.size());
+    }
+
+    // After aggregating all vertices and indices, you can create buffers
+    createVertexBuffer();
+    createIndexBuffer();
 }
 
 

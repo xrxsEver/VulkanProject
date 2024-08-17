@@ -61,6 +61,7 @@ namespace VkUtils {
 
     void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkDevice device, VkCommandPool commandPool, VkQueue graphicsQueue);
 
+
 }
 
 struct VulkanContext {

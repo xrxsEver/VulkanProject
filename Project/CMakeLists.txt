@@ -50,6 +50,7 @@ set(SOURCES
     Shader2D.cpp
     ModelLoader.cpp
     Lib/stb_image.h
+    Lib/json.hpp  
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_demo.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp

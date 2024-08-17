@@ -208,7 +208,7 @@ private:
     void updateLightInfoBuffer(uint32_t currentImage);
     bool rotationEnabled = false;
     bool rKeyPressed = false;
-    ImVec4 backgroundColor = ImVec4(0.3f, 0.3f, 0.3f, 1.0f);  // Initial background color for ImGui
+    ImVec4 backgroundColor = ImVec4(0.04f, 0.1f, 0.09f, 0.1f);  // Initial background color for ImGui
     VkClearValue clearColor;  // Clear value used by Vulkan
     bool wireframeEnabled = false;
     bool currentWireframeState = false;  // Store the last known wireframe state
@@ -233,5 +233,13 @@ private:
 
     glm::vec3 light0Position = glm::vec3(0.0f, 0.0f, 30.0f); // Yellow light position
     glm::vec3 light1Position = glm::vec3(10.0f, 40.0f, 0.0f); // White light position
+
+    glm::vec3 ambientColor = glm::vec3(1.0f, 1.0f, 1.0f); // White light default color
+    float ambientIntensity = 3.0f;
+
+
+    void loadSceneFromJson(const std::string& sceneFilePath);
+    std::vector<SceneObject> sceneObjects;
+
 
 };

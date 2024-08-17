@@ -22,6 +22,8 @@ struct Light {
 layout(binding = 2) uniform LightInfo {
     Light lights[MAX_LIGHTS];
     vec3 viewPos;
+    vec3 ambientColor;  // Ambient light color
+    float ambientIntensity;  // Ambient light intensity
 } lightInfo;
 
 layout(binding = 6) uniform ToggleInfo {
@@ -31,6 +33,7 @@ layout(binding = 6) uniform ToggleInfo {
     bool viewNormalOnly;
     bool viewMetalnessOnly;
     bool viewSpecularOnly;
+    bool applyRimLight;  // Toggle for rim lighting
 } toggleInfo;
 
 void main() {
@@ -47,6 +50,10 @@ void main() {
     }
 
     vec3 viewDir = normalize(lightInfo.viewPos - fragPosition);
+
+    // Ambient lighting
+    vec3 ambient = lightInfo.ambientColor * lightInfo.ambientIntensity * baseColor;
+    finalColor += ambient;
 
     for (int i = 0; i < MAX_LIGHTS; i++) {
         vec3 lightDir = normalize(lightInfo.lights[i].position - fragPosition);
@@ -65,6 +72,15 @@ void main() {
         }
 
         finalColor += diffuse + specular;
+    }
+
+    // Rim Lighting
+    if (toggleInfo.applyRimLight) {
+        vec3 rimColor = vec3(1.0);  // White rim light by default
+        float rimIntensity = 0.75;  // Control the strength of the rim light
+        float rim = 1.0 - max(dot(norm, viewDir), 0.0);
+        rim = smoothstep(0.0, 1.0, rim);
+        finalColor += rim * rimColor * rimIntensity;
     }
 
     if (toggleInfo.viewNormalOnly) {

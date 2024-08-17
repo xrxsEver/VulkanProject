@@ -66,16 +66,16 @@ void SwapChainManager::createSwapChain() {
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE; // If there was an old swapchain, set it here
 
-    // Print debug information
-    std::cout << "Creating swapchain with the following parameters:\n";
-    std::cout << "Image Count: " << imageCount << "\n";
-    std::cout << "Image Format: " << surfaceFormat.format << "\n";
-    std::cout << "Image Color Space: " << surfaceFormat.colorSpace << "\n";
-    std::cout << "Image Extent: (" << extent.width << ", " << extent.height << ")\n";
-    std::cout << "Image Sharing Mode: " << createInfo.imageSharingMode << "\n";
-    std::cout << "Pre Transform: " << createInfo.preTransform << "\n";
-    std::cout << "Composite Alpha: " << createInfo.compositeAlpha << "\n";
-    std::cout << "Present Mode: " << presentMode << "\n";
+   //      Print debug information
+   //  std::cout << "Creating swapchain with the following parameters:\n";
+   //  std::cout << "Image Count: " << imageCount << "\n";
+   //  std::cout << "Image Format: " << surfaceFormat.format << "\n";
+   //  std::cout << "Image Color Space: " << surfaceFormat.colorSpace << "\n";
+   //  std::cout << "Image Extent: (" << extent.width << ", " << extent.height << ")\n";
+   //  std::cout << "Image Sharing Mode: " << createInfo.imageSharingMode << "\n";
+   //  std::cout << "Pre Transform: " << createInfo.preTransform << "\n";
+   //  std::cout << "Composite Alpha: " << createInfo.compositeAlpha << "\n";
+   //  std::cout << "Present Mode: " << presentMode << "\n";
 
     // Create the swap chain
     VkResult result = vkCreateSwapchainKHR(m_device, &createInfo, nullptr, &m_swapChain);
@@ -132,7 +132,6 @@ void SwapChainManager::createImageViews() {
             throw std::runtime_error("failed to create image views!");
         }
 
-        std::cout << "Created image view " << i << std::endl; // Debugging
     }
 }
 
@@ -155,31 +154,31 @@ SwapChainSupportDetails SwapChainManager::querySwapChainSupport(VkPhysicalDevice
     SwapChainSupportDetails details;
 
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_surface, &details.capabilities);
-    std::cout << "Capabilities: \n";
-    std::cout << "  minImageCount: " << details.capabilities.minImageCount << "\n";
-    std::cout << "  maxImageCount: " << details.capabilities.maxImageCount << "\n";
-    std::cout << "  currentExtent: (" << details.capabilities.currentExtent.width << ", " << details.capabilities.currentExtent.height << ")\n";
+  //std::cout << "Capabilities: \n";
+  //std::cout << "  minImageCount: " << details.capabilities.minImageCount << "\n";
+  //std::cout << "  maxImageCount: " << details.capabilities.maxImageCount << "\n";
+  //std::cout << "  currentExtent: (" << details.capabilities.currentExtent.width << ", " << details.capabilities.currentExtent.height << ")\n";
 
     uint32_t formatCount;
     vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface, &formatCount, nullptr);
-    std::cout << "Formats: \n";
+  // std::cout << "Formats: \n";
     if (formatCount != 0) {
         details.formats.resize(formatCount);
         vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface, &formatCount, details.formats.data());
-        for (const auto& format : details.formats) {
-            std::cout << "  format: " << format.format << ", colorSpace: " << format.colorSpace << "\n";
-        }
+      // for (const auto& format : details.formats) {
+      //     std::cout << "  format: " << format.format << ", colorSpace: " << format.colorSpace << "\n";
+      // }
     }
 
     uint32_t presentModeCount;
     vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentModeCount, nullptr);
-    std::cout << "Present Modes: \n";
+  //  std::cout << "Present Modes: \n";
     if (presentModeCount != 0) {
         details.presentModes.resize(presentModeCount);
         vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentModeCount, details.presentModes.data());
-        for (const auto& presentMode : details.presentModes) {
-            std::cout << "  presentMode: " << presentMode << "\n";
-        }
+      // for (const auto& presentMode : details.presentModes) {
+      //     std::cout << "  presentMode: " << presentMode << "\n";
+      // }
     }
 
     return details;
