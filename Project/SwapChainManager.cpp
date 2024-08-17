@@ -17,6 +17,7 @@ SwapChainManager::~SwapChainManager() {
 	cleanupSwapChain();
 }
 
+
 void SwapChainManager::createSwapChain() {
     // Clean up old swapchain if it exists
     if (m_swapChain != VK_NULL_HANDLE) {
@@ -66,17 +67,6 @@ void SwapChainManager::createSwapChain() {
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE; // If there was an old swapchain, set it here
 
-   //      Print debug information
-   //  std::cout << "Creating swapchain with the following parameters:\n";
-   //  std::cout << "Image Count: " << imageCount << "\n";
-   //  std::cout << "Image Format: " << surfaceFormat.format << "\n";
-   //  std::cout << "Image Color Space: " << surfaceFormat.colorSpace << "\n";
-   //  std::cout << "Image Extent: (" << extent.width << ", " << extent.height << ")\n";
-   //  std::cout << "Image Sharing Mode: " << createInfo.imageSharingMode << "\n";
-   //  std::cout << "Pre Transform: " << createInfo.preTransform << "\n";
-   //  std::cout << "Composite Alpha: " << createInfo.compositeAlpha << "\n";
-   //  std::cout << "Present Mode: " << presentMode << "\n";
-
     // Create the swap chain
     VkResult result = vkCreateSwapchainKHR(m_device, &createInfo, nullptr, &m_swapChain);
     if (result != VK_SUCCESS) {
@@ -102,6 +92,8 @@ void SwapChainManager::createSwapChain() {
         std::cerr << "Second vkGetSwapchainImagesKHR failed with error: " << result << std::endl;
         throw std::runtime_error("failed to get swap chain images!");
     }
+
+    //std::cout << "Successfully retrieved " << m_swapChainImages.size() << " swapchain images." << std::endl;
 
     m_swapChainImageFormat = surfaceFormat.format;
     m_swapChainExtent = extent;

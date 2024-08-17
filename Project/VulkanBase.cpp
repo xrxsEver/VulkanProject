@@ -6,6 +6,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <Lib/stb_image.h>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
+
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
 
@@ -214,6 +218,8 @@ void VulkanBase::mainLoop() {
 
         processInput(deltaTime);
         drawFrame();
+        takeScreenshot();
+
     }
 
     vkDeviceWaitIdle(device);
@@ -629,7 +635,7 @@ void printCurrentWorkingDirectory() {
 void VulkanBase::loadModel() {
    // printCurrentWorkingDirectory();
 
-    std::string modelPath = "Res/Castle.obj";
+    std::string modelPath = "Res/Model.obj";
     std::filesystem::path fullPath = std::filesystem::absolute(modelPath);
 
    // std::cout << "Attempting to load model from path: " << fullPath << std::endl;  //uncomment to see the path its trying to load
@@ -870,6 +876,8 @@ void VulkanBase::recordCommandBuffer(CommandBuffer& commandBuffer, uint32_t imag
             ImGui::BulletText("E to go down");
             ImGui::BulletText("Mouse Look around");
             ImGui::BulletText("Scroll-> movement Speed");
+            ImGui::BulletText("P to SceenShot");
+            ImGui::BulletText("R to Rotate");
 
             ImGui::Spacing();
             ImGui::Separator();
@@ -887,6 +895,15 @@ void VulkanBase::recordCommandBuffer(CommandBuffer& commandBuffer, uint32_t imag
             glm::vec3 camPos = camera.getPosition();
             ImGui::Text("Position: (%.2f, %.2f, %.2f)", camPos.x, camPos.y, camPos.z);
             ImGui::Text("Rotation: Yaw = %.2f, Pitch = %.2f", camera.yaw, camera.pitch);
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            if (ImGui::Button("Capture Screenshot")) {
+                captureScreenshot = true;
+            }
+
 
             ImGui::EndTabItem();
         }
@@ -1739,6 +1756,199 @@ void VulkanBase::loadSceneFromJson(const std::string& sceneFilePath)
     createIndexBuffer();
 }
 
+void VulkanBase::createScreenshotImage(VkExtent2D extent, VkFormat format)
+{
+    VkImageCreateInfo imageInfo{};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width = extent.width;
+    imageInfo.extent.height = extent.height;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = format;
+    imageInfo.tiling = VK_IMAGE_TILING_LINEAR;  // Important for CPU access
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    vkCreateImage(device, &imageInfo, nullptr, &screenshotImage);
+
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(device, screenshotImage, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = VkUtils::findMemoryType(physicalDevice, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    vkAllocateMemory(device, &allocInfo, nullptr, &screenshotImageMemory);
+    vkBindImageMemory(device, screenshotImage, screenshotImageMemory, 0);
+
+}
+
+void VulkanBase::blitImage(VkImage srcImage, VkImage dstImage, VkExtent2D extent)
+{
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+    VkImageMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = dstImage;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0, 0, nullptr, 0, nullptr, 1, &barrier
+    );
+
+    VkImageBlit blit{};
+    blit.srcOffsets[0] = { 0, 0, 0 };
+    blit.srcOffsets[1] = { static_cast<int32_t>(extent.width), static_cast<int32_t>(extent.height), 1 };
+    blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    blit.srcSubresource.mipLevel = 0;
+    blit.srcSubresource.baseArrayLayer = 0;
+    blit.srcSubresource.layerCount = 1;
+
+    blit.dstOffsets[0] = { 0, 0, 0 };
+    blit.dstOffsets[1] = { static_cast<int32_t>(extent.width), static_cast<int32_t>(extent.height), 1 };
+    blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    blit.dstSubresource.mipLevel = 0;
+    blit.dstSubresource.baseArrayLayer = 0;
+    blit.dstSubresource.layerCount = 1;
+
+    vkCmdBlitImage(
+        commandBuffer,
+        srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1, &blit,
+        VK_FILTER_NEAREST
+    );
+
+    endSingleTimeCommands(commandBuffer);
+
+}
+
+void VulkanBase::saveScreenshot(VkImage image, VkExtent2D extent, const std::string& filename) {
+    VkImageSubresource subResource{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0 };
+    VkSubresourceLayout subResourceLayout;
+    vkGetImageSubresourceLayout(device, image, &subResource, &subResourceLayout);
+
+    const char* data;
+    vkMapMemory(device, screenshotImageMemory, 0, VK_WHOLE_SIZE, 0, (void**)&data);
+    data += subResourceLayout.offset;
+
+    // Calculate the exact number of bytes per row
+    int rowSize = extent.width * 4; // Assuming 4 bytes per pixel (RGBA)
+    std::vector<unsigned char> pixels(rowSize * extent.height);
+
+    for (int y = 0; y < extent.height; y++) {
+        for (int x = 0; x < extent.width; x++) {
+            unsigned char r = data[x * 4 + 0];
+            unsigned char g = data[x * 4 + 1];
+            unsigned char b = data[x * 4 + 2];
+            unsigned char a = data[x * 4 + 3];
+
+            // Swap R and B channels (convert RGBA to BGRA)
+            pixels[y * rowSize + x * 4 + 0] = b;
+            pixels[y * rowSize + x * 4 + 1] = g;
+            pixels[y * rowSize + x * 4 + 2] = r;
+            pixels[y * rowSize + x * 4 + 3] = a;
+        }
+        data += subResourceLayout.rowPitch;  // Move to the next row (considering padding)
+    }
+
+    vkUnmapMemory(device, screenshotImageMemory);
+
+    // Write to a JPEG file using stb_image_write
+    stbi_write_jpg(filename.c_str(), extent.width, extent.height, 4, pixels.data(), 100); 
+}
+
+
+
+void VulkanBase::takeScreenshot() {
+    if (!captureScreenshot) {
+        return;  // Only take a screenshot if requested
+    }
+
+    VkExtent2D extent = swapChainManager->getSwapChainExtent();
+    VkFormat format = swapChainManager->getSwapChainImageFormat();
+    const auto& swapChainImages = swapChainManager->getSwapChainImages();
+
+    std::cout << "currentFrame: " << currentFrame << ", swapChainImages size: " << swapChainImages.size() << std::endl;
+
+    if (currentFrame >= swapChainImages.size()) {
+        std::cerr << "Error: currentFrame index out of range!" << std::endl;
+        captureScreenshot = false;  // Reset the flag
+        return;
+    }
+
+    createScreenshotImage(extent, format);
+
+    // Transition the swapchain image to TRANSFER_SRC layout before copying
+    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+    VkImageMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = swapChainImages[currentFrame];
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.srcAccessMask = 0; // Or appropriate access mask
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0, 0, nullptr, 0, nullptr, 1, &barrier
+    );
+    endSingleTimeCommands(commandBuffer);
+
+    // Blit the swapchain image to the screenshot image
+    blitImage(swapChainImages[currentFrame], screenshotImage, extent);
+
+    // Transition the swapchain image back to PRESENT_SRC layout
+    commandBuffer = beginSingleTimeCommands();
+    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT; // Or appropriate access mask
+    barrier.dstAccessMask = 0;
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+        0, 0, nullptr, 0, nullptr, 1, &barrier
+    );
+    endSingleTimeCommands(commandBuffer);
+
+    static int screenshotCount = 0;
+    std::string filename = "ScreenShots/screenshot_" + std::to_string(++screenshotCount) + ".jpg";
+    saveScreenshot(screenshotImage, extent, filename);
+
+
+    // Reset the flag
+    captureScreenshot = false;
+
+    // Cleanup
+    vkDestroyImage(device, screenshotImage, nullptr);
+    vkFreeMemory(device, screenshotImageMemory, nullptr);
+}
 
 
 void VulkanBase::createDescriptorPool() {
@@ -2175,4 +2385,16 @@ void VulkanBase::processInput(float deltaTime) {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_RELEASE) {
         rKeyPressed = false; 
     }
+
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS && !screenshotRequested) {
+        screenshotRequested = true;   // Mark that the key was pressed
+        captureScreenshot = true;     // Set the flag to capture the screenshot
+    }
+
+    // Reset the screenshot request when the key is released
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_RELEASE && screenshotRequested) {
+        screenshotRequested = false;  // Reset the request flag
+    }
+
+
 }

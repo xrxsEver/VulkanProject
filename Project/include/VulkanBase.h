@@ -240,6 +240,20 @@ private:
 
     void loadSceneFromJson(const std::string& sceneFilePath);
     std::vector<SceneObject> sceneObjects;
+    
+    // screenshot image 
+    VkImage screenshotImage;
+    VkDeviceMemory screenshotImageMemory;
 
+
+    void createScreenshotImage(VkExtent2D extent, VkFormat format);
+    void blitImage(VkImage srcImage, VkImage dstImage, VkExtent2D extent);
+    void saveScreenshot(VkImage image, VkExtent2D extent, const std::string& filename);
+    void takeScreenshot();
+
+    bool screenshotRequested = false;  
+    bool captureScreenshot = false;    
+    std::string lastScreenshotFilename = "";
+    ImTextureID screenshotTextureID = nullptr;
 
 };
