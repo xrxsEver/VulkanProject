@@ -3,6 +3,7 @@
 XeRender is a 3D renderer that combines Physically Based Rendering (PBR) with an interactive ImGui interface, offering precise, real-time adjustments and control for a seamless rendering experience.
 
 
+![GIFMaker_me](https://github.com/user-attachments/assets/f03385ed-ff7e-4fcb-bc0d-6e8676e649c4)
 
 ## Features
 
@@ -19,7 +20,6 @@ XeRender is a 3D renderer that combines Physically Based Rendering (PBR) with an
 - **RTX Auto-Detection**: Automatically selects the best RTX-capable device.
 - **Real-Time FPS Display**: Monitor rendering performance.
 
-  
 ![screenshot_11](https://github.com/user-attachments/assets/8f0f4a95-b58a-4dbb-8d4d-0c31fccbf549)
 
 ### Camera
